@@ -7,7 +7,7 @@ JAR_FILE_NAME = libjava.jar
 
 ##### Do not edit beyond this line #####
 
-SRCS = $(addsuffix /*.java,$(addprefix src/,$(PKGS)))
+CLASSES = $(addsuffix /*.class,$(addprefix $(OUT_DIR)/,$(PKGS)))
 
 OUT_DIR = bin
 
@@ -19,8 +19,10 @@ printFlags:
 	@mkdir -p "$(OUT_DIR)"
 	@echo "Compiling using: javac\n"
 
-$(JAR_FILE_NAME): $(SRCS)
-	javac -d "$(OUT_DIR)" $^
+$(OUT_DIR)/%.class: src/%.java
+	javac -source 1.5 -target 1.5 -d "$(OUT_DIR)" $^
+
+$(JAR_FILE_NAME): $(CLASSES)
 	jar -cfv "$@" -C "$(OUT_DIR)" .
 
 clean:
