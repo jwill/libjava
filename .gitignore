@@ -15,6 +15,7 @@ bin/*
 *.lib
 *.so
 *.out
+*.jar
 
 *.obj
 *.exe
