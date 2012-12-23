@@ -52,7 +52,7 @@ $(OUT_DIR)/%.xxx: %.jar
 
 $(OUT_DIR)/%.class: src/%.java $(LIBS_TARGETS)
 	@echo "Compiling \"$<\" ..."
-	@javac $(JAVAC_OPTS) $? 
+	@javac $(JAVAC_OPTS) $< 
 # $(?:src/%=%)
 
 $(JAR_FILE_NAME): $(CLASSES) 
