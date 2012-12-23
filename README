@@ -6,7 +6,7 @@ j.util.Option*
 ===============
 Java command line parsing library.
 
-See https://github.com/lucastan/proxyServer/blob/master/ProxyServer.java 
-for usage example.
+See https://github.com/lucastan/proxyServer/blob/master/j/net/proxy/ProxyServer.java 
+for a usage example.
 
 
