@@ -13,6 +13,7 @@ public class ChunkedOutputStream extends FilterOutputStream
 {
     private static final byte[] NEW_LINE = {'\r', '\n'};
     private static final byte[] LAST_CHUNK = 
+        // no trailing headers after 0\r\n
         {'0', '\r', '\n', '\r', '\n'};
 
     private boolean closed;
@@ -28,6 +29,8 @@ public class ChunkedOutputStream extends FilterOutputStream
     @Override
     public void write(int i) throws IOException
     {
+        if (this.closed) throw new IOException("stream closed");
+
         final byte[] header = {'1', '\r', '\n', (byte)i, '\r', '\n'};
         this.out.write(header, 0, header.length);
     }
@@ -45,6 +48,7 @@ public class ChunkedOutputStream extends FilterOutputStream
     public void write(byte[] b, int off, int len)
         throws IOException
     {
+        if (this.closed) throw new IOException("stream closed");
 
         if (len > 0)
         {
