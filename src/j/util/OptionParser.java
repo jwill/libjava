@@ -172,7 +172,7 @@ public class OptionParser
         // We require the class to be public so that we can get
         // and set the fields
         final int mods = cls.getModifiers();
-        if (! Modifiers.isPublic(mods))
+        if (! Modifier.isPublic(mods))
             throw new Exception("class "+cls.getName()+" must be public");
 
         // get public fields
