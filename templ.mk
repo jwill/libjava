@@ -35,23 +35,27 @@ else
     JAR_OPTS = cfe
 endif
 
+JAVAC_OPTS = $(LIBS_OPTS) -source 1.5 -target 1.5 -d "$(OUT_DIR)"
+
 ### targets
 all: printFlags $(JAR_FILE_NAME)
 
 ### rules
 printFlags:
 	@mkdir -p "$(OUT_DIR)"
+	@echo "Compiling using: javac $(JAVAC_OPTS)"
 
 $(OUT_DIR)/%.xxx: %.jar  
 	@mkdir -p "$(dir $(OUT_DIR)/$*.xxx)"
 	@echo -n > "$@"
 	cd "$(OUT_DIR)"; jar -xf "../$<"
 
-$(OUT_DIR)/%.class: src/%.java
-	javac $(LIBS_OPTS) -source 1.5 -target 1.5 -d "$(OUT_DIR)" $? 
+$(OUT_DIR)/%.class: src/%.java $(LIBS_TARGETS)
+	@echo "Compiling \"$<\" ..."
+	@javac $(JAVAC_OPTS) $? 
 # $(?:src/%=%)
 
-$(JAR_FILE_NAME): $(CLASSES) $(LIBS_TARGETS)
+$(JAR_FILE_NAME): $(CLASSES) 
 	jar $(JAR_OPTS) "$@" $(MAIN_CLASS) -C "$(OUT_DIR)" .
 
 clean:
