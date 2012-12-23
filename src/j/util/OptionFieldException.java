@@ -27,7 +27,7 @@ public class OptionFieldException extends OptionException
         
         // this should not occur
         if (this.opt == null) 
-            throw new OptionException(
+            throw new RuntimeException(
                 "field "+field.getName()+" has no option!");
     }
 
