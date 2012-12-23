@@ -45,6 +45,9 @@ printFlags:
 	@mkdir -p "$(OUT_DIR)"
 	@echo "Compiling using: javac $(JAVAC_OPTS)"
 
+### This indicates do not remove intermediate files
+.SECONDARY:
+
 $(OUT_DIR)/%.xxx: %.jar  
 	@mkdir -p "$(dir $(OUT_DIR)/$*.xxx)"
 	@echo -n > "$@"
