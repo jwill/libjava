@@ -7,13 +7,13 @@ package j.util;
 import java.lang.annotation.*;
 
 /**
- * Represents the constraint that an option value be limited
- * to a range.
+ * Represents the constraint that an integral option value 
+ * be within a range.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-public @interface OptionConstraintRange
+public @interface OptionConstraintRange 
 {
     /** Minimum value, inclusive. */
     int min() default Integer.MIN_VALUE;

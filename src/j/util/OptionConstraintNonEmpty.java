@@ -7,12 +7,13 @@ package j.util;
 import java.lang.annotation.*;
 
 /**
- * Represents the constraint that the option value be non-empty.
+ * Represents the constraint that a string option value 
+ * be non-empty and non-null.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-public @interface OptionConstraintNonEmpty
+public @interface OptionConstraintNonEmpty 
 {
     // nothing
 }
