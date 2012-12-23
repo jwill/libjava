@@ -63,7 +63,7 @@ public class OptionParser
     }
 
     private static void checkConstraint(Field f, Object val)
-        throws Exception
+        throws OptionConstraintException, OptionFieldException
     {
         OptionConstraintRange cRange = 
             f.getAnnotation(OptionConstraintRange.class);
@@ -77,69 +77,88 @@ public class OptionParser
             cls.equals(Integer.TYPE))
         {
             if (cNonEmpty != null)
-                throw new Exception("invalid constraint type non-empty "
-                 + "for field "+f.getName());
+                throw new OptionFieldException(f,
+                    "constraint type non-empty not allowed");
 
             if (cRange == null) return;
         
             int v = (int)(Integer)val;
             if (v < cRange.min() || v > cRange.max())
-                throw new Exception("option -"+opt.name()+" must"
-                +" be between "+cRange.min()+" and "+cRange.max()
-                +" inclusively");
+                throw new OptionConstraintException(f, cRange);
         }
         else if (cls.equals(String.class))
         {
             if (cRange != null)
-                throw new Exception("invalid constraint type range "
-                 + "for field "+f.getName());
+                throw new OptionFieldException(f, 
+                    "constraint type range not allowed");
 
             if (cNonEmpty == null) return;
 
             String v = (String)val;
             if (v == null || v.isEmpty())
             {
-                throw new Exception("option -"+opt.name()+" must"
-                +" be non-empty");
+                throw new OptionConstraintException(f,cNonEmpty);
             }
         }
     }
 
     /**
-     * Parses options and fills in the relevant fields in
-     * the specified object.
+     * Map options from command line arguments to the respective
+     * fields of a specified object.
+     *
+     * @param obj Object whose class must be public. The fields
+     *        to be filled in must also be public. The default
+     *        value for an option is specified in the respective
+     *        field declaration.
+     *        
+     * @param args Command line arguments as received by main()
+     * @remarks Parsing errors will be printed to stderr.
+     *          The usage message will also be printed when an
+     *          error occurs.
      * @return Returns null on error.
-     *         Otherwise, returns an array of extra unparsed args 
-     *         or an array if there is none.
+     *         Otherwise, returns an array of unparsed args 
+     *         which can be empty if there is none.
      */
     public static String[] parse(Object obj, String[] args)
+        throws Exception
     {
         try
         {
             return parseInternal(obj, args);
         }
-        catch(Exception e)
+        catch (OptionParserException e)
+        {
+            if (e.getOption() != null)    
+                System.err.println("-"+e.getOption().name()+": "+
+                    e.getMessage());
+            else
+                System.err.println(e.getMessage());
+
+            printUsage(obj);
+        }
+        catch (OptionConstraintException e)
+        {
+            System.err.println("-"+e.getOption().name()+": "+
+                    e.getMessage());
+            printUsage(obj);
+        }
+        catch (OptionFieldException e)
+        {
+            // internal exception, no need to print usage
+            System.err.println("field "+e.getField().getName()+": "+
+                e.getMessage());
+        }
+        catch (OptionException e)
         {
             System.err.println(e.getMessage());
-            
-            try
-            {
-                printUsage(obj);
-            }
-            catch(Exception e2)
-            { 
-                // exceptions shouldn't occur, and if it does,
-                // print it
-                e2.printStackTrace(System.err);
-            }
-            
-            System.err.flush();
-            return null;
+            // internal exception, no need to print usage
         }
+        
+        return null;
     }
 
     private static Object parseValue(Field f, String val)
-        throws Exception
+        throws OptionParserException, OptionFieldException
     {
         Class cls = f.getType();
         
@@ -162,19 +181,26 @@ public class OptionParser
             }
             catch (NumberFormatException e)
             {
-                throw new Exception("Unrecognizable number: "+trimmedVal);
+                throw new OptionParserException(f, 
+                    "Unrecognizable number: "+trimmedVal, e);
             }
         }
 
         if (cls.equals(String.class))
             return trimmedVal;
 
-        throw new Exception("unexpected field type "+
+        throw new OptionFieldException(f, 
+            "unexpected field type "+
             cls.getName());
     }
 
     private static String[] parseInternal
-        (Object obj, String args[]) throws Exception
+        (Object obj, String args[]) 
+        throws OptionConstraintException, 
+            OptionParserException, 
+            OptionException,
+            OptionFieldException,
+            Exception
     {
         // maps from switch name to field
         Map<String, Field> mapping = new
@@ -188,7 +214,7 @@ public class OptionParser
         // and set the fields
         final int mods = cls.getModifiers();
         if (! Modifier.isPublic(mods))
-            throw new Exception("class "+cls.getName()+" must be public");
+            throw new OptionException("class "+cls.getName()+" must be public");
 
         // get public fields
         Field[] fields = cls.getFields();
@@ -202,30 +228,27 @@ public class OptionParser
             
             if (!checkSupported(f))
             {
-                throw new Exception("unsupported type for "
-                    +"field "+f.getName());
+                throw new OptionFieldException(f,"unsupported type");
             }
 
             final String name = opt.name() == null ? "" : opt.name();
             if (name.isEmpty())
             {
-                throw new Exception
-                    ("empty or null option name for field "+
-                     f.getName());
+                throw new OptionFieldException
+                    (f, "empty or null option name");
             }
 
             if (opt.description() == null ||
                 opt.description().trim().isEmpty())
             {
-                throw new Exception("empty or null description for field "
-                 + f.getName());
+                throw new OptionFieldException(f,"empty or null description");
             }
 
             final boolean exists = mapping.containsKey(name);
             if (exists)
             {
-                throw new Exception("duplicate option name '"
-                    + name + "' for field "+f.getName());
+                throw new OptionFieldException(f,"duplicate option name '"
+                    + name+"'");
             }
             
             mapping.put(name, f);
@@ -244,20 +267,20 @@ public class OptionParser
             {
                 final String name = cur.substring(1);
                 if (name.isEmpty())
-                    throw new Exception("empty switch");
+                    throw new OptionParserException("empty switch");
 
                 Field f = mapping.get(name);
                 if (f == null)
                 {
-                    throw new Exception("unknown option: -"+
+                    throw new OptionParserException("unknown option: -"+
                         name);
                 }
 
                 if (useNext(f)) 
                 {
                     if (next == null)
-                        throw new Exception("value not "
-                            +"specified for option -"+name);
+                        throw new OptionParserException(f,"value not "
+                            +"specified");
                     i++;
                 }
 
@@ -279,8 +302,7 @@ public class OptionParser
 
             if (opt.required() && 
                 !specified.contains(opt.name()))
-                throw new Exception("option -"+opt.name()+
-                    " required");
+                throw new OptionParserException(f,"required");
         }
 
         return extras.toArray(new String[]{});
