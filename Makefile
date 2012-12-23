@@ -20,7 +20,7 @@ printFlags:
 	@echo "Compiling using: javac\n"
 
 $(OUT_DIR)/%.class: src/%.java
-	javac -source 1.5 -target 1.5 -d "$(OUT_DIR)" $^
+	javac -source 1.5 -target 1.5 -d "$(OUT_DIR)" $?
 
 $(JAR_FILE_NAME): $(CLASSES)
 	jar -cfv "$@" -C "$(OUT_DIR)" .
