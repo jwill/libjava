@@ -121,8 +121,18 @@ public class OptionParser
         catch(Exception e)
         {
             System.err.println(e.getMessage());
-            try{printUsage(obj);}
-            catch(Exception e2){ /*nothing*/ }
+            
+            try
+            {
+                printUsage(obj);
+            }
+            catch(Exception e2)
+            { 
+                // exceptions shouldn't occur, and if it does,
+                // print it
+                e2.printStackTrace(System.err);
+            }
+            
             System.err.flush();
             return null;
         }
@@ -158,6 +168,14 @@ public class OptionParser
         // Perform sanity checking for option fields
         // and to populate mapping
         Class cls = obj.getClass();
+
+        // We require the class to be public so that we can get
+        // and set the fields
+        final int mods = cls.getModifiers();
+        if (! Modifiers.isPublic(mods))
+            throw new Exception("class "+cls.getName()+" must be public");
+
+        // get public fields
         Field[] fields = cls.getFields();
         for (Field f : fields)
         {
@@ -166,7 +184,7 @@ public class OptionParser
             {
                 continue;
             }
-
+            
             if (!checkSupported(f))
             {
                 throw new Exception("unsupported type for "

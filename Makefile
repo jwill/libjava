@@ -23,7 +23,7 @@ $(OUT_DIR)/%.class: src/%.java
 	javac -cp "$(OUT_DIR)" -source 1.5 -target 1.5 -d "$(OUT_DIR)" $?
 
 $(JAR_FILE_NAME): $(CLASSES)
-	jar -cfv "$@" -C "$(OUT_DIR)" .
+	jar -cf "$@" -C "$(OUT_DIR)" .
 
 clean:
 	rm -rf "$(OUT_DIR)" "$(JAR_FILE_NAME)" *~ 
