@@ -32,11 +32,16 @@ public class OptionParser
             }
             else
             {
-                System.err.print(" [Default="+f.get(obj)+"]");
+                Object value = f.get(obj);
+                if (value == null)
+                    System.err.print(" [Default=]");
+                else
+                    System.err.print(" [Default="+value+"]");
             }
 
             System.err.println();
         }
+
     }
 
     private static boolean checkSupported(Field f)
@@ -118,6 +123,7 @@ public class OptionParser
             System.err.println(e.getMessage());
             try{printUsage(obj);}
             catch(Exception e2){ /*nothing*/ }
+            System.err.flush();
             return null;
         }
     }
@@ -149,6 +155,8 @@ public class OptionParser
         Map<String, Field> mapping = new
             HashMap<String, Field>();
 
+        // Perform sanity checking for option fields
+        // and to populate mapping
         Class cls = obj.getClass();
         Field[] fields = cls.getFields();
         for (Field f : fields)
@@ -165,21 +173,29 @@ public class OptionParser
                     +"field "+f.getName());
             }
 
-            if (opt.name() == null || opt.name().isEmpty())
+            final String name = opt.name() == null ? "" : opt.name();
+            if (name.isEmpty())
             {
                 throw new Exception
                     ("empty or null option name for field "+
                      f.getName());
             }
 
-            boolean exists = mapping.containsKey(opt.name());
+            if (opt.description() == null ||
+                opt.description().trim().isEmpty())
+            {
+                throw new Exception("empty or null description for field "
+                 + f.getName());
+            }
+
+            final boolean exists = mapping.containsKey(name);
             if (exists)
             {
                 throw new Exception("duplicate option name '"
-                    +opt.name() + "' for field "+f.getName());
+                    + name + "' for field "+f.getName());
             }
             
-            mapping.put(opt.name(), f);
+            mapping.put(name, f);
         }
 
         List<String> extras = new ArrayList<String>();
@@ -193,7 +209,7 @@ public class OptionParser
 
             if (cur.startsWith("-"))
             {
-                String name = cur.substring(1);
+                final String name = cur.substring(1);
                 if (name.isEmpty())
                     throw new Exception("empty switch");
 
@@ -225,7 +241,6 @@ public class OptionParser
 
         for (Field f:fields)
         {
-            
             Option opt = f.getAnnotation(Option.class);
             if (opt == null) continue;
 
