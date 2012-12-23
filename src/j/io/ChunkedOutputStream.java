@@ -27,11 +27,12 @@ public class ChunkedOutputStream extends FilterOutputStream
     }
 
     @Override
-    public void write(int i) throws IOException
+    public synchronized void write(int i) throws IOException
     {
         if (this.closed) throw new IOException("stream closed");
-
+        
         final byte[] header = {'1', '\r', '\n', (byte)i, '\r', '\n'};
+        
         this.out.write(header, 0, header.length);
     }
     
@@ -39,6 +40,8 @@ public class ChunkedOutputStream extends FilterOutputStream
         byte[] header, byte[] b, int off, int len)
         throws IOException
     {
+        if (this.closed) throw new IOException("stream closed");
+        
         this.out.write(header, 0, header.length);
         this.out.write(b, off, len);
         this.out.write(NEW_LINE);
@@ -48,7 +51,6 @@ public class ChunkedOutputStream extends FilterOutputStream
     public void write(byte[] b, int off, int len)
         throws IOException
     {
-        if (this.closed) throw new IOException("stream closed");
 
         if (len > 0)
         {
