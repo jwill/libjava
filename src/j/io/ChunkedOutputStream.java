@@ -9,22 +9,16 @@ import java.io.*;
 /**
  * Represents an HTTP chunked output stream 
  */
-public class ChunkedOutputStream extends OutputStream
+public class ChunkedOutputStream extends FilterOutputStream
 {
     private static final byte[] NEW_LINE = {'\r', '\n'};
 
-    private final OutputStream os;
+    public ChunkedOutputStream(OutputStream out)
+    {
+        super(out);
 
-    public ChunkedOutputStream(OutputStream os)
-    {
-        this.os = os;
-    }
-    
-    @Override
-    public void write(byte[]b)
-        throws IOException
-    {
-        write(b, 0, b.length);
+        if (out == null)
+            throw new IllegalArgumentException("out is null");
     }
 
     @Override
@@ -40,16 +34,16 @@ public class ChunkedOutputStream extends OutputStream
     {
         if (len > 0)
         {
-            this.os.write(String.format("%x", len).getBytes("US-ASCII"));
-            this.os.write(NEW_LINE);
-            this.os.write(b, off, len);
-            this.os.write(NEW_LINE);
+            this.out.write(String.format("%x", len).getBytes("US-ASCII"));
+            this.out.write(NEW_LINE);
+            this.out.write(b, off, len);
+            this.out.write(NEW_LINE);
         }
         else
         {
             // this should throw an exception if len < 0
             // or do nothing if len == 0
-            this.os.write(b, off, len);
+            this.out.write(b, off, len);
         }
     }
 
@@ -57,20 +51,20 @@ public class ChunkedOutputStream extends OutputStream
     public void close() throws IOException
     {
         // last chunk is empty
-        this.os.write('0');
-        this.os.write(NEW_LINE);
+        this.out.write('0');
+        this.out.write(NEW_LINE);
 
         // no trailing headers
-        this.os.write(NEW_LINE);
+        this.out.write(NEW_LINE);
 
         flush();
-        this.os.close(); 
+        this.out.close(); 
     }
 
     @Override
     public void flush() throws IOException
     {
-        this.os.flush();
+        this.out.flush();
     }
 }
 

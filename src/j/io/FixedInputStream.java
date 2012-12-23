@@ -11,63 +11,120 @@ import java.io.*;
  * The size of this input stream is limited to a predefined size,
  * regardless of the size of the underlying stream.
  */
-public class FixedInputStream extends InputStream
+public class FixedInputStream extends FilterInputStream
 {
-    private final int size;
-    private final InputStream inner;
-    private int curRead;
+    /** Number of bytes left. */
+    private int curLeft;
 
+    /**
+     * @exception IllegalArgumentException 
+     *      if inner is null or size <= 0
+     */
     public FixedInputStream(InputStream inner, int size)
     {
+        super(inner);
+
         if (inner == null)
             throw new IllegalArgumentException("inner is null");
 
-        this.curRead = 0;
-        this.size = size;
-        this.inner = inner;
+        if (size <= 0)
+            throw new IllegalArgumentException("size must > 0");
+
+        this.curLeft = size;
     }
     
+    /**
+     * @return false. Not supported.
+     */
     @Override
     public boolean markSupported()
     {
         return false;
     }
 
-    @Override
-    public int read(byte[]b)
-        throws IOException
+    /**
+     * @exception IOException always thrown since not supported.
+     */
+    @Override 
+    public void reset() throws IOException
     {
-        return read(b, 0, b.length);
+        throw new IOException("not supported");
+    }
+    
+    /**
+     * Does nothing since not supported.
+     */
+    @Override 
+    public void mark(int k) 
+    {
+        // nothing
+    }
+
+    private InputStream getIn() throws IOException
+    {
+        final InputStream local = this.in;
+        if (local == null)
+            throw new IOException("stream closed");
+        return local;
     }
 
     @Override
-    public int read() throws IOException
+    public synchronized int read() throws IOException
     {
-        byte[] b = {0};
-        final int read = this.read(b, 0, 1);
-        if (read < 0) return read;
-        return b[0];
+        final InputStream local = getIn();
+
+        if (this.curLeft > 0)
+        {
+            final int ret = local.read();
+            if (ret >= 0)
+                this.curLeft --;
+
+            return ret;
+        }
+
+        return -1;
     }
     
     @Override
-    public int read(byte[] b, int off, int len)
+    public synchronized int read(byte[] b, int off, int len)
         throws IOException
     {
-        if (this.curRead >= this.size)
+        final InputStream local = getIn();
+
+        if (this.curLeft <= 0)
             return -1;
 
-        final int toRead = Math.min(len, this.size - this.curRead);
-        final int read = this.inner.read(b, off, toRead);
-        if (read < 0) return -1;
+        final int toRead = Math.min(len, this.curLeft);
+        final int read = local.read(b, off, toRead);
+        if (read >= 0)
+        {
+            this.curLeft -= read;
+        }
 
-        this.curRead += read;
         return read;
+    }
+ 
+    @Override
+    public synchronized long skip(long n) throws IOException
+    {
+        final InputStream local = getIn();
+
+        n = Math.min(n, this.curLeft);
+
+        return local.skip(n);
     }
 
     @Override
     public void close() throws IOException
     {
-        this.inner.close();
+        // don't use getIn() since we allow closing
+        // of a closed stream
+        final InputStream local = this.in;
+
+        if (local == null) return;
+
+        local.close();
+        this.in = null;
     }
 }
 
