@@ -29,7 +29,7 @@ public class ChunkedOutputStream extends FilterOutputStream
     }
     
     @Override
-    public void write(byte[] b, int off, int len)
+    public synchronized void write(byte[] b, int off, int len)
         throws IOException
     {
         if (len > 0)

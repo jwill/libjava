@@ -137,8 +137,8 @@ public class ChunkedInputStream extends FilterInputStream
     {
         byte[] b = {0};
         final int read = this.read(b, 0, 1);
-        if (read < 0) return read;
-        return b[0];
+        if (read >= 0) return b[0];
+        return read;
     }
 
     @Override

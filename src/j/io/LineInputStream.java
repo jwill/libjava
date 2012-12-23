@@ -123,9 +123,9 @@ public class LineInputStream extends FilterInputStream
         {
             b[off] = (byte)(this.lastByte & 255);
             this.hasLastByte = false;
-            int read = localIn.read(b, off+1, len-1);
-            if (read <= 0) return 1;
-            return read+1;
+            final int read = localIn.read(b, off+1, len-1);
+            if (read >= 0) return read+1;
+            return 1;
         }
 
         int read = localIn.read(b, off, len);

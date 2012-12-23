@@ -111,7 +111,9 @@ public class FixedInputStream extends FilterInputStream
 
         n = Math.min(n, this.curLeft);
 
-        return local.skip(n);
+        final long nskip = local.skip(n);
+        if (nskip >= 0) this.curLeft -= (int)nskip;
+        return nskip;
     }
 
     @Override
