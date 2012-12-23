@@ -12,11 +12,15 @@ import java.io.*;
 public class ChunkedOutputStream extends FilterOutputStream
 {
     private static final byte[] NEW_LINE = {'\r', '\n'};
+    private static final byte[] LAST_CHUNK = 
+        {'0', '\r', '\n', '\r', '\n'};
+
+    private boolean closed;
 
     public ChunkedOutputStream(OutputStream out)
     {
         super(out);
-
+        this.closed = false;
         if (out == null)
             throw new IllegalArgumentException("out is null");
     }
@@ -24,20 +28,29 @@ public class ChunkedOutputStream extends FilterOutputStream
     @Override
     public void write(int i) throws IOException
     {
-        byte[] b = {(byte)i};
-        write(b, 0, 1);
+        final byte[] header = {'1', '\r', '\n', (byte)i, '\r', '\n'};
+        this.out.write(header, 0, header.length);
     }
     
-    @Override
-    public synchronized void write(byte[] b, int off, int len)
+    private synchronized void writeChunk(
+        byte[] header, byte[] b, int off, int len)
         throws IOException
     {
+        this.out.write(header, 0, header.length);
+        this.out.write(b, off, len);
+        this.out.write(NEW_LINE);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len)
+        throws IOException
+    {
+
         if (len > 0)
         {
-            this.out.write(String.format("%x", len).getBytes("US-ASCII"));
-            this.out.write(NEW_LINE);
-            this.out.write(b, off, len);
-            this.out.write(NEW_LINE);
+            final byte[] header = 
+                String.format("%x\r\n", len).getBytes("US-ASCII");
+            writeChunk(header, b, off, len);
         }
         else
         {
@@ -47,17 +60,25 @@ public class ChunkedOutputStream extends FilterOutputStream
         }
     }
 
+    private synchronized void closeInternal() throws IOException
+    {
+        // We only write this once.
+        if (!this.closed)
+            this.out.write(LAST_CHUNK);
+
+        this.closed = true;
+    }
+
     @Override
     public void close() throws IOException
     {
-        // last chunk is empty
-        this.out.write('0');
-        this.out.write(NEW_LINE);
+        closeInternal();
+        try
+        {
+            flush();
+        }
+        catch (IOException e){/*nothing*/}
 
-        // no trailing headers
-        this.out.write(NEW_LINE);
-
-        flush();
         this.out.close(); 
     }
 
