@@ -145,14 +145,29 @@ public class OptionParser
         
         if (cls.equals(Boolean.class) || 
             cls.equals(Boolean.TYPE))
+        {
+            // ignore val since presence indicates truth
             return true;
+        }
+
+        final String trimmedVal = val.trim();
         
         if (cls.equals(Integer.class)||
             cls.equals(Integer.TYPE))
-            return Integer.parseInt(val.trim());
-        
-        if (cls.equals(String.class) )
-            return val.trim();
+        {
+            try
+            {
+                // decode recognizes hexa and octal prefix
+                return Integer.decode(trimmedVal);
+            }
+            catch (NumberFormatException e)
+            {
+                throw new Exception("Unrecognizable number: "+trimmedVal);
+            }
+        }
+
+        if (cls.equals(String.class))
+            return trimmedVal;
 
         throw new Exception("unexpected field type "+
             cls.getName());
