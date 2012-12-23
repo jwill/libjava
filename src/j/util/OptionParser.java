@@ -102,12 +102,6 @@ public class OptionParser
         }
     }
 
-    public static String[] parse(Object obj, String[] args)
-        throws Exception
-    {
-        return parse(obj, args, true);
-    }
-
     /**
      * Map options from command line arguments to the respective
      * fields of a specified object.
@@ -119,8 +113,6 @@ public class OptionParser
      *        
      * @param args Command line arguments as received by main()
      *
-     * @param exitOnErr Exits the program on error.
-     *
      * @remarks Parsing errors will be printed to stderr.
      *          The usage message will also be printed when an
      *          error occurs.
@@ -128,7 +120,7 @@ public class OptionParser
      *         Otherwise, returns an array of unparsed args 
      *         which can be empty if there is none.
      */
-    public static String[] parse(Object obj, String[] args, boolean exitOnErr)
+    public static String[] parse(Object obj, String[] args)
         throws Exception
     {
         try
@@ -162,8 +154,6 @@ public class OptionParser
             System.err.println(e.getMessage());
             // internal exception, no need to print usage
         }
-        
-        if (exitOnErr) System.exit(1);
 
         return null;
     }
