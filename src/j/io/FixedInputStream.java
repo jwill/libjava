@@ -8,17 +8,21 @@ import java.io.*;
 
 /**
  * Represents an input stream with a predetermined size.
- * The size of this input stream is limited to a predefined size,
- * regardless of the size of the underlying stream.
+ * The size of this input stream is the minimum of
+ * a predefined size and the actual size of the underlying stream.
+ *
+ * This class is thread-safe.
  */
 public class FixedInputStream extends FilterInputStream
 {
-    /** Number of bytes left. */
+    /** Number of bytes left in the stream for reading. */
     private int curLeft;
+
+    private final Object lock = new Object();
 
     /**
      * @exception IllegalArgumentException 
-     *      if inner is null or size <= 0
+     *      if inner is null or size is not positive
      */
     public FixedInputStream(InputStream inner, int size)
     {
@@ -69,50 +73,71 @@ public class FixedInputStream extends FilterInputStream
     }
 
     @Override
-    public synchronized int read() throws IOException
+    public int read() throws IOException
     {
         final InputStream local = getIn();
 
-        if (this.curLeft > 0)
-        {
-            final int ret = local.read();
-            if (ret >= 0)
-                this.curLeft --;
+        int ret = -1;
 
-            return ret;
+        synchronized(this.lock)
+        {
+            if (this.curLeft > 0)
+            {
+                ret = local.read();
+                // it is ok to decrement even if ret == -1.
+                // This just means we have prematurely reached
+                // the end of the stream, and curLeft will no longer
+                // be a counter of the number of bytes left.
+                // Future attempts to read from the underlying stream
+                // will just get -1.
+                this.curLeft --;
+            }
         }
 
-        return -1;
+        return ret;
     }
     
     @Override
-    public synchronized int read(byte[] b, int off, int len)
+    public int read(byte[] b, int off, int len)
         throws IOException
     {
         final InputStream local = getIn();
 
-        if (this.curLeft <= 0)
-            return -1;
+        int nread = -1;
 
-        final int toRead = Math.min(len, this.curLeft);
-        final int read = local.read(b, off, toRead);
-        if (read >= 0)
+        synchronized(this.lock)
         {
-            this.curLeft -= read;
+            if (this.curLeft > 0)
+            {
+                // this block works even if len <= 0
+                final int toRead = Math.min(len, this.curLeft);
+                nread = local.read(b, off, toRead);
+                if (nread >= 0)
+                {
+                    this.curLeft -= nread;
+                }
+            }
         }
 
-        return read;
+        return nread;
     }
  
     @Override
-    public synchronized long skip(long n) throws IOException
+    public long skip(long n) throws IOException
     {
         final InputStream local = getIn();
 
-        n = Math.min(n, this.curLeft);
+        long nskip = 0;
+        
+        synchronized(this.lock)
+        {
+            // this block works even if n <= 0
+            n = Math.min(n, this.curLeft);
 
-        final long nskip = local.skip(n);
-        if (nskip >= 0) this.curLeft -= (int)nskip;
+            nskip = local.skip(n);
+            if (nskip >= 0) this.curLeft -= (int)nskip;
+        }
+
         return nskip;
     }
 

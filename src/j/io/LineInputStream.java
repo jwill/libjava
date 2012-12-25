@@ -8,15 +8,18 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This stream allows reading of a line in the UTF-8 charset, as well as, 
- * reading of binary data from an underlying binary stream.
+ * This stream allows reading of data in the form of lines as well as
+ * in bytes from an underlying binary stream.
+ *
+ * This class is not thread-safe
  */
 public class LineInputStream extends FilterInputStream
 {
     private final ByteArrayOutputStream bout;
 
+    /** -1 indicates there is no last byte; else
+     * it will be from 0 to 255. */
     private int lastByte;
-    private boolean hasLastByte;
 
     /**
      * @param ist Underlying binary stream.
@@ -29,7 +32,7 @@ public class LineInputStream extends FilterInputStream
         if (ist == null)
             throw new IllegalArgumentException("input stream is null");
 
-        this.hasLastByte = false;
+        this.lastByte = -1;
         this.bout = new ByteArrayOutputStream();
     }
 
@@ -43,57 +46,63 @@ public class LineInputStream extends FilterInputStream
     }
 
     /**
-     * Reads a line starting from the current position until
+     * Reads bytes starting from the current position until
      * it is terminated by either a line feed (LF), 
-     * a carriage return (CR)
-     * or a CRLF sequence.
-     * The line will be interpreted using the UTF-8 charset.
-     * @return The line read, excluding the line terminator.
+     * a carriage return (CR), a CRLF sequence or the end-of-stream 
+     * condition.
+     *
+     * The bytes in the line will be interpreted using the UTF-8 charset.
+     *
+     * @return If end of stream and nothing is read, returns
+     *         null; else returns the line read, 
+     *         excluding the line terminator.
+     *
+     * @exception IOException if the stream is closed or an I/O error occurs.
      */
-    public synchronized String readLine() throws IOException
+    public String readLine() throws IOException
     {
         final InputStream localIn = getIn();
 
         this.bout.reset();
 
-        if (this.hasLastByte)
+        if (this.lastByte >= 0)
         {
-            this.hasLastByte = false;
             this.bout.write(this.lastByte);
+            this.lastByte = -1;
         }
 
-        boolean cont = true;
-        while (cont)
+    loop:
+        while(true)
         {
-            int v = localIn.read();
-            if (v < 0) break;
-
-            switch(v)
+            final int cur = localIn.read();
+            if (cur >= 0)
             {
-            case '\r':
-                this.lastByte = localIn.read();
-                if (this.lastByte >= 0)
+                switch(v)
                 {
-                    if (this.lastByte != '\n')
-                    {
-                        this.hasLastByte = true;
-                    }
+                case '\r':
+                    this.lastByte = localIn.read();
+                    if (this.lastByte == '\n')
+                        this.lastByte = -1;
+
+                    break;
+
+                case '\n':
+                    break;
+
+                default:
+                    this.bout.write(v);
+                    continue loop;
                 }
-                cont = false;
-                break;
-
-            case '\n':
-                cont = false;
-                break;
-
-            default:
-                this.bout.write(v);
-                break;
             }
-        }
+            else if (this.bout.size() == 0)
+                // nothing is read, so return null.
+                return null;
 
-        return new String(this.bout.toByteArray(), "UTF-8");
-    }
+            final byte[] buf = this.bout.toByteArray();
+            
+            return new String(buf, "UTF-8");
+        } // while
+    } // method
 
     /**
      * Does nothing since not supported.
@@ -114,36 +123,34 @@ public class LineInputStream extends FilterInputStream
     }
 
     @Override
-    public synchronized int read(byte[] b, int off, int len)
+    public int read(byte[] b, int off, int len)
         throws IOException
     {
         final InputStream localIn = getIn();
 
-        if (this.hasLastByte && len > 0)
+        if (this.lastByte < 0 || len <= 0)
         {
-            b[off] = (byte)(this.lastByte & 255);
-            this.hasLastByte = false;
-            final int read = localIn.read(b, off+1, len-1);
-            if (read >= 0) return read+1;
-            return 1;
+            return localIn.read(b, off, len);
         }
 
-        int read = localIn.read(b, off, len);
-        return read;
+        b[off] = (byte)(this.lastByte & 255);
+        this.lastByte = -1;
+        final int read = localIn.read(b, off+1, len-1);
+        if (read >= 0) return read+1;
+        return 1;
     }
 
     @Override
-    public synchronized int read() throws IOException
+    public int read() throws IOException
     {
         final InputStream localIn = getIn();
 
-        if (this.hasLastByte)
-        {
-            this.hasLastByte = false;
-            return this.lastByte;
-        }
+        if (this.lastByte < 0)
+            return localIn.read();
 
-        return localIn.read();
+        final int ret = this.lastByte;
+        this.lastByte = -1;
+        return ret;
     }
 
     private InputStream getIn() throws IOException
@@ -156,17 +163,19 @@ public class LineInputStream extends FilterInputStream
     }
 
     @Override
-    public synchronized long skip(long n) throws IOException
+    public long skip(long n) throws IOException
     {
         final InputStream localIn = getIn();
 
-        if (n >= 1 && this.hasLastByte)
+        if (this.lastByte < 0 || n <= 0)
         {
-            n--;
-            this.hasLastByte = false;
+            return localIn.skip(n);
         }
 
-        return localIn.skip(n);
+        this.lastByte = -1;
+        final long nskip = localIn.skip(n-1);
+        if (nskip >= 0) return nskip+1;
+        return 1;
     }
 
     @Override
