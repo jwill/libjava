@@ -75,28 +75,29 @@ public class LineInputStream extends FilterInputStream
         while(true)
         {
             final int cur = localIn.read();
-            if (cur >= 0)
+                
+            switch(cur)
             {
-                switch(v)
-                {
-                case '\r':
-                    this.lastByte = localIn.read();
-                    if (this.lastByte == '\n')
-                        this.lastByte = -1;
+            case '\r':
+                this.lastByte = localIn.read();
+                if (this.lastByte == '\n')
+                    this.lastByte = -1;
 
+                // fall thru
+            case '\n':
+                break;
+                   
+            case -1:
+                if (this.bout.size() > 0)
                     break;
-
-                case '\n':
-                    break;
-
-                default:
-                    this.bout.write(v);
-                    continue loop;
-                }
-            }
-            else if (this.bout.size() == 0)
+                
                 // nothing is read, so return null.
                 return null;
+
+            default:
+                this.bout.write(cur);
+                continue loop;
+            }
 
             final byte[] buf = this.bout.toByteArray();
             
