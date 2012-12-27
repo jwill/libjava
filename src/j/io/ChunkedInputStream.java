@@ -5,25 +5,28 @@
 package j.io;
 
 import java.io.*;
+import java.util.*;
 
 /**
  * Represents an HTTP chunked input stream.
- * Currently, the available() method is not overriden and
- * will give an overly optimistic number of bytes available
- * since some of those bytes are metadata, not actual content.
+ * This class is not thread-safe.
  */
 public class ChunkedInputStream extends FilterInputStream
 {
     private static final int SKIP_BUF_SIZE = 2048;
     private static byte[] skipBuf;
-    
+
+    // Some values for curLeft
+    private static final int CHUNK_NONE = -2;
+    private static final int CHUNK_FIRST = -1;
+
     private volatile LineInputStream inner;
 
-    /** size of current chunk */
-    private int curSize;
+    /** No. of unread bytes left in current chunk */
+    private int curLeft;
 
-    /** No. of bytes already read for current chunk */
-    private int curRead;
+    /** Trailing headers after the last chunk */
+    private List<String> trailingHeaders;
 
     /**
      * @param inner Underlying input stream.
@@ -36,9 +39,9 @@ public class ChunkedInputStream extends FilterInputStream
         if (inner == null)
             throw new IllegalArgumentException("inner is null");
 
-        this.curSize = 0;
-        this.curRead = 0;
+        this.curLeft = CHUNK_FIRST;
         this.inner = inner;
+        this.trailingHeaders = null;
     }
     
     /**
@@ -58,7 +61,15 @@ public class ChunkedInputStream extends FilterInputStream
     {
         // nothing
     }
-    
+
+    @Override
+    public int available() throws IOException
+    {
+        final InputStream local = getIn();
+
+        return Math.max(0, Math.min(this.curLeft, local.available()));
+    }
+
     /**
      * @exception IOException always thrown since not supported.
      */
@@ -79,57 +90,84 @@ public class ChunkedInputStream extends FilterInputStream
     
     private void readChunk(LineInputStream local) throws IOException
     {
-        // if this is not the first chunk,
-        // then read the terminating CRLF of the current chunk.
-        if (this.curSize > 0)
+        final int localCurLeft = this.curLeft;
+        switch (localCurLeft)
+        {
+        case CHUNK_NONE:
+            // If no more chunk, then return
+            return;
+
+        default:
+            // if this is not the first chunk,
+            // then read the terminating CRLF of the current chunk.
             local.readLine();
 
-        final String line = local.readLine();
-        // line is of the form:
-        // <chunk-size> [; chunk-extension]
-        // where <chunk-size> is in hexadec without any prefix
-        // and chunk-extension is optional
+        case CHUNK_FIRST: {
+            final String line = local.readLine();
 
-        int idx = line.indexOf(';');
-        if (idx < 0) 
-        {
-            idx = line.indexOf(' ');
-            if (idx < 0) idx = line.length();
-        }
+            // line is of the form:
+            // <chunk-size> [; chunk-extension]
+            // where <chunk-size> is in hexadec without any prefix
+            // and chunk-extension is optional
 
-        // we ignore chunk extension for now
+            int idx = line.indexOf(';');
+            if (idx < 0) 
+            {
+                idx = line.indexOf(' ');
+                if (idx < 0) idx = line.length();
+            }
 
-        final String sizeStr = line.substring(0, idx);
-        final int size = Integer.parseInt(sizeStr, 16);
+            // we ignore chunk extension for now
+
+            final String sizeStr = line.substring(0, idx);
+            final int size = Integer.parseInt(sizeStr, 16);
         
-        if (size > 0)
-        {
-            this.curSize = size;
-            this.curRead = 0;
-            return;
-        }
+            if (size > 0)
+            {
+                this.curLeft = size;
+                return;
+            }
 
-        if (size == 0)
-        {
-            this.curSize = -1;
-            this.curRead = -1;
+            if (size == 0)
+            {
+                this.curLeft = CHUNK_NONE;
 
-            // This last chunk contains OPTIONAL "Trailing HTTP headers"
-            // with each on a separate line. 
-            // The format of the last chunk is :
-            // 0 CRLF
-            // [trailing header] CRLF
-            // [...] CRLF
-            // CRLF
+                // This last chunk contains OPTIONAL "Trailing HTTP headers"
+                // with each on a separate line. 
+                // The format of the last chunk is :
+                // 0 CRLF
+                // [trailing header] CRLF
+                // [...] CRLF
+                // CRLF
             
-            // For now, we ignore such headers.
+                this.trailingHeaders = new ArrayList<String>();
 
-            // read until we hit a blank line
-            while(!local.readLine().isEmpty());
-            return;
-        }
+                // read until we hit a blank line
+                String tmp = null;
+                while(!(tmp = local.readLine()).isEmpty())
+                {
+                    this.trailingHeaders.add(tmp);
+                }
+                this.trailingHeaders = 
+                    Collections.unmodifiableList(this.trailingHeaders);
+                return;
+            }
 
-        throw new IOException("negative chunk size: "+size);
+            throw new IOException("negative chunk size: "+size);
+
+        } } // switch
+    }
+
+    /**
+     * Gets the trailing headers that appear after the last chunk.
+     * @return Before the last chunk is read, returns null.
+     *         After the last chunk is read, i.e., read() returns -1, returns 
+     *         an unmodifiable list of headers which can be empty if there
+     *         is none.
+     */
+    public List<String> getTrailingHeaders()
+    {
+        return this.trailingHeaders;
     }
 
     @Override
@@ -137,34 +175,31 @@ public class ChunkedInputStream extends FilterInputStream
     {
         byte[] b = {0};
         final int read = this.read(b, 0, 1);
-        if (read >= 0) return b[0];
+        if (read >= 0) return ((int)b[0]) & 255;
         return read;
     }
 
     @Override
-    public synchronized int read(byte[] b, int off, int len)
+    public int read(byte[] b, int off, int len)
         throws IOException
     {
         final LineInputStream local = getIn(); 
 
         // finished reading the current chunk,
         // so let's move on to the next one.
-        if (this.curRead == this.curSize)
+        if (this.curLeft <= 0)
         {
-            //  are we already at the last chunk?
-            if (this.curSize < 0) return -1;
-
             readChunk(local);
 
             // no more chunk?
-            if (this.curSize <= 0) return  -1;
+            if (this.curLeft <= 0) return  -1;
         }
     
-        final int toRead = Math.min(len, this.curSize - this.curRead);
+        final int toRead = Math.min(len, this.curLeft);
         final int read = local.read(b, off, toRead);
         if (read >= 0)
         {
-            this.curRead += read;
+            this.curLeft -= read;
         }
 
         return read;
