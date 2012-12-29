@@ -6,6 +6,7 @@
 ### Compiled binaries
 
 bin/*
+docs/*
 
 *.class
 
