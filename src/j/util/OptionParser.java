@@ -106,6 +106,9 @@ public class OptionParser
      * Map options from command line arguments to the respective
      * fields of a specified object.
      *
+     * Parsing errors will be printed to stderr.
+     * The usage message will also be printed when an error occurs.
+     *
      * @param obj Object whose class must be public. The fields
      *        to be filled in must also be public. The default
      *        value for an option is specified in the respective
@@ -113,9 +116,6 @@ public class OptionParser
      *        
      * @param args Command line arguments as received by main()
      *
-     * @remarks Parsing errors will be printed to stderr.
-     *          The usage message will also be printed when an
-     *          error occurs.
      * @return Returns null on error.
      *         Otherwise, returns an array of unparsed args 
      *         which can be empty if there is none.
