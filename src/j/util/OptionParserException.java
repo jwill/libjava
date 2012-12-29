@@ -34,17 +34,16 @@ public class OptionParserException
         super(msg, cause);
 
         this.field = field;
-        this.opt =  field != null ? field.getAnnotation(Option.class)
-                    : null;
-
+        this.opt = (field != null ? field.getAnnotation(Option.class)
+                    : null);
     }
 
-    public Field getField()
+    public final Field getField()
     {
         return this.field;
     }
 
-    public Option getOption()
+    public final Option getOption()
     {
         return this.opt;
     }

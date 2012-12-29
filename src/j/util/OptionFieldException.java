@@ -31,12 +31,12 @@ public class OptionFieldException extends OptionException
                 "field "+field.getName()+" has no option!");
     }
 
-    public Field getField()
+    public final Field getField()
     {
         return this.field;
     }
 
-    public Option getOption()
+    public final Option getOption()
     {
         return this.opt;
     }

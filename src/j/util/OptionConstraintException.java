@@ -44,7 +44,7 @@ public class OptionConstraintException
         this.con = con;
     }
 
-    public Annotation getConstraint()
+    public final Annotation getConstraint()
     {
         return this.con;
     }
