@@ -1,3 +1,11 @@
+Building
+==========
+Do a "make" to build the jar file
+
+Do a "make docs" to build the documentation. Then open docs/index.html
+
+Do a "make clean" to remove the jar and the bin dir.
+
 j.io.*
 =======
 Utility IO streams classes.
