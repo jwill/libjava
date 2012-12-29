@@ -33,10 +33,14 @@ public class OptionConstraintException
         }
     }
 
+    /**
+     * @exception IllegalArgumentException if con is null
+     */
     public OptionConstraintException(Field field, Annotation con)
     {
         super(field, getMessage(con));
 
+        if (con == null) throw new IllegalArgumentException("con is null");
         this.con = con;
     }
 
