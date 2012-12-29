@@ -15,14 +15,15 @@ import java.io.*;
  */
 public class FixedInputStream extends FilterInputStream
 {
-    /** Number of bytes left in the stream for reading. */
+    /** Number of bytes left in the stream for reading. 
+     * Invariant: non-negative */
     private int curLeft;
 
-    private final Object lock = new Object();
-
     /**
+     * @param size if zero, then the end of stream is reached immediately,
+     *        and no byte can be read from this stream at all.
      * @exception IllegalArgumentException 
-     *      if inner is null or size is not positive
+     *      if inner is null or size is negative
      */
     public FixedInputStream(InputStream inner, int size)
     {
@@ -31,8 +32,8 @@ public class FixedInputStream extends FilterInputStream
         if (inner == null)
             throw new IllegalArgumentException("inner is null");
 
-        if (size <= 0)
-            throw new IllegalArgumentException("size must > 0");
+        if (size < 0)
+            throw new IllegalArgumentException("size must >= 0");
 
         this.curLeft = size;
     }
@@ -72,6 +73,24 @@ public class FixedInputStream extends FilterInputStream
         return local;
     }
 
+    /**
+     * Gets the number of bytes that can be read without blocking.
+     * This method might not be very useful when more than one thread
+     * reads from this stream, as the return value could become inaccurate
+     * immediately upon returning.
+     * See InputStream.available() for a detailed description of this 
+     * method.
+     * @exception IOException when this stream is closed or an error occurs.
+     */
+    @Override
+    public int available() throws IOException
+    {
+        // reading this.curLeft is not thread-safe
+        // but it doesn't matter since we can never be 100% accurate
+        // when this class is used by multiple threads.
+        return Math.min(getIn().available(), this.curLeft);
+    }
+
     @Override
     public int read() throws IOException
     {
@@ -79,7 +98,7 @@ public class FixedInputStream extends FilterInputStream
 
         int ret = -1;
 
-        synchronized(this.lock)
+        synchronized(this)
         {
             if (this.curLeft > 0)
             {
@@ -105,7 +124,7 @@ public class FixedInputStream extends FilterInputStream
 
         int nread = -1;
 
-        synchronized(this.lock)
+        synchronized(this)
         {
             if (this.curLeft > 0)
             {
@@ -129,7 +148,7 @@ public class FixedInputStream extends FilterInputStream
 
         long nskip = 0;
         
-        synchronized(this.lock)
+        synchronized(this)
         {
             // this block works even if n <= 0
             n = Math.min(n, this.curLeft);
