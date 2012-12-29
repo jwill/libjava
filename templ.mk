@@ -55,7 +55,8 @@ TMP2_ = $(SRCS:.java=.class)
 CLASSES = $(TMP2_:$(SRC_DIR)/%=$(OUT_DIR)/%)
 
 TMP3_ = $(addsuffix $(PATH_SEP),$(LIBS) $(SRC_DIR)/ $(OUT_DIR)/)
-LIBS_OPTS = -cp "$(subst $(PATH_SEP) ,$(PATH_SEP),$(TMP3_))"
+CLASSPATHS = $(subst $(PATH_SEP) ,$(PATH_SEP),$(TMP3_))
+LIBS_OPTS = -cp "$(CLASSPATHS)"
 
 LIBS_TARGETS = $(addprefix $(OUT_DIR)/,$(LIBS:.jar=.xxx))
 
@@ -71,8 +72,8 @@ JAVAC_OPTS = $(LIBS_OPTS) -source $(TARGET_VERSION) \
 PKGS_PROPER = $(subst /,.,$(PKGS))
 
 JAVADOC_OPTS = -source $(TARGET_VERSION) -sourcepath "$(SRC_DIR)/" \
-    -protected -charset UTF-8 \
-    -keywords -sourcetab 4 -d "$(DOCS_DIR)" $(PKGS_PROPER)
+    -protected -charset UTF-8 -classpath "$(CLASSPATHS)" \
+    -keywords -d "$(DOCS_DIR)" $(PKGS_PROPER)
 
 ###
 ### targets
