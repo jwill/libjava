@@ -102,29 +102,44 @@ public class ChunkedInputStream extends FilterInputStream
             // then read the terminating CRLF of the current chunk.
             local.readLine();
 
+            // fall thru
+
         case CHUNK_FIRST: {
             final String line = local.readLine();
+            final int lineLen = line.length();
 
             // line is of the form:
             // <chunk-size> [; chunk-extension]
             // where <chunk-size> is in hexadec without any prefix
             // and chunk-extension is optional
 
-            int idx = line.indexOf(';');
-            if (idx < 0) 
-            {
-                idx = line.indexOf(' ');
-                if (idx < 0) idx = line.length();
-            }
-
             // we ignore chunk extension for now
+            
+            // Parse the chunk size
+            long size = 0;
+            int idx = 0;
+            for (; idx < lineLen; idx++)
+            {
+                final int n = Character.digit(line.charAt(idx), 16);
+                if (n >= 0)
+                {
+                    size = (size << 4) + n;
+                    if (size <= Integer.MAX_VALUE)
+                        continue;
+                    
+                    throw new IOException("chunk size too large");
+                }
 
-            final String sizeStr = line.substring(0, idx);
-            final int size = Integer.parseInt(sizeStr, 16);
+                // stop when we hit a non-hexadec digit
+                break;
+            }
         
+            // there must be at least one valid hexadec digit
+            if (idx == 0) throw new IOException("malformed chunk size");
+            
             if (size > 0)
             {
-                this.curLeft = size;
+                this.curLeft = (int)size;
                 return;
             }
 
