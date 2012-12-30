@@ -16,11 +16,14 @@ public class ChunkedOutputStream extends FilterOutputStream
     private static final int DEFAULT_BUF_SIZE = 8192;
 
     private static final byte[] NEW_LINE = {'\r', '\n'};
+    
     private static final byte[] LAST_CHUNK = 
         // no trailing headers after 0\r\n
         {'0', '\r', '\n', '\r', '\n'};
 
-    private static final String HEX = "0123456789ABCDEF";
+    private static final byte[] HEX = 
+        {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
+         'a', 'b', 'c', 'd', 'e', 'f'};
 
     /** Buffer */
     private final byte[] buf;
@@ -84,7 +87,7 @@ public class ChunkedOutputStream extends FilterOutputStream
         int idx = ndigit-1;
         do
         {
-            b[idx] = (byte)HEX.charAt(count & 0xf);
+            b[idx] = HEX[count & 0xf];
             idx--;
             count >>>= 4;
         }
