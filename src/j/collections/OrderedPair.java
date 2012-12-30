@@ -85,13 +85,14 @@ public final class OrderedPair<A extends Comparable<A>,B extends Comparable<B>>
      * Compares two comparables.
      * Null comes first.
      */
-    private static <T> int compare(Comparable<T> a, Comparable<T> b)
+    private static <T extends Comparable<T>> 
+        int compare(T a, T b)
     {
         if (a == null)
             if (b == null) return 0;
             else return -1;
 
-        return a.compareTo(b);
+        return ((Comparable<T>)a).compareTo(b);
     }
     
     /**
