@@ -66,7 +66,7 @@ else
     JAR_OPTS = cfe
 endif
 
-JAVAC_OPTS = $(LIBS_OPTS) -source $(TARGET_VERSION) \
+JAVAC_OPTS = $(LIBS_OPTS) -Xlint:unchecked -source $(TARGET_VERSION) \
     -target $(TARGET_VERSION) -d "$(OUT_DIR)"
 
 PKGS_PROPER = $(subst /,.,$(PKGS))
