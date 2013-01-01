@@ -1,7 +1,8 @@
 package j.algo;
 
-import java.util.*;
+import java.util.Queue;
 import java.io.*;
+import j.collections.ArrayQueue;
 
 /**
  * An implementation of the union find solution with ranking and 
@@ -15,6 +16,8 @@ import java.io.*;
  */
 public class UnionFind implements Serializable
 {
+    private static final long serialVersionUID = -5024744406713321675L;
+
     /** rank[i] = Rank of element i. 
      * A negative value indicates that the element is a canonical root of 
      * the membership set (or tree). The magnitude of the value is the 
@@ -24,7 +27,10 @@ public class UnionFind implements Serializable
      * A non-negative value indicates that the element is a non-root. The value
      * is the zero-based index of its parent in the tree. */
     private final int[] rank;
-    
+
+    /** Temp storage for path compression. */
+    private final transient Queue<Integer> pathQ;
+
     /** Number of disjoint sets (or trees). */
     private int numDisjoint;
 
@@ -44,6 +50,7 @@ public class UnionFind implements Serializable
         
         this.numDisjoint = numElems;
         this.rank = new int[numElems];
+        this.pathQ = new ArrayQueue<Integer>(32);
     }
     
     /**
@@ -137,17 +144,26 @@ public class UnionFind implements Serializable
      */
     private int find(int idx)
     {
-        final int theRank = this.rank[idx];
+        // This loop's max iteration is bounded by the maximum length 
+        // of a path (due to ranking), which is log_2(Integer.MAX_VALUE + 1)
+        while(true)
+        {
+            final int theRank = this.rank[idx];
 
-        // If this elem is a root, then return its index.
-        if (theRank < 0) 
-            return idx;
-       
-        // Path compression.
-        // This recursion shouldn't cause a stack overflow
-        // since the maximum length of a path (due to ranking),
-        // is log_2(Integer.MAX_VALUE + 1)
-        return this.rank[idx] = find(theRank);
+            // If this elem is a canonical root, then break.
+            if (theRank < 0) break;
+
+            // Remember index for path compression later.
+            this.pathQ.offer(idx);
+            
+            idx = theRank;
+        }
+
+        // Perform path compression.
+        while (this.pathQ.size() > 0)
+            this.rank[this.pathQ.poll()] = idx;
+
+        return idx;
     }
 }
 
