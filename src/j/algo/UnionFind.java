@@ -1,6 +1,7 @@
 package j.algo;
 
 import java.util.*;
+import java.io.*;
 
 /**
  * An implementation of the union find solution with ranking and 
@@ -12,7 +13,7 @@ import java.util.*;
  * This class is not thread-safe.
  * @author Lucas Tan
  */
-public class UnionFind
+public class UnionFind implements Serializable
 {
     /** rank[i] = Rank of element i. 
      * A negative value indicates that the element is a canonical root of 
