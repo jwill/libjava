@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ConcurrentModificationException;
-import java.io.Serializable;
+import java.io.*;
 
 
 /**
@@ -28,7 +28,9 @@ public class ArrayQueue<E> extends AbstractQueue<E>
 
     private static final int DEFAULT_CAPACITY = 16;
 
-    private Object[] elems;
+    // transient because we don't want to use the default-serialization
+    // method which will store unused array slots as well.
+    private transient Object[] elems;
 
     /** Zero-based index of first enqueued elem. */
     private int startIdx;
@@ -37,7 +39,7 @@ public class ArrayQueue<E> extends AbstractQueue<E>
     private int size;
 
     /** modification counter */
-    private int modCount;
+    private transient int modCount;
 
     private class Iter implements Iterator<E>
     {
@@ -78,8 +80,9 @@ public class ArrayQueue<E> extends AbstractQueue<E>
                     return ret;
                 }
 
-                throw new  ConcurrentModificationException();
+                throw new ConcurrentModificationException();
             }
+
             throw new NoSuchElementException();
         }
     }
@@ -125,13 +128,52 @@ public class ArrayQueue<E> extends AbstractQueue<E>
         }
     }
 
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException
+    {
+        s.defaultReadObject();
+        int len = this.size = s.readInt();
+        Object[] a = this.elems = new Object[this.size];
+
+        for (int i = 0; i < len; i++)
+        {
+            a[i] = s.readObject();
+        }
+
+        this.startIdx = 0;
+    }
+
+    private void writeObject(ObjectOutputStream os)
+        throws IOException
+    {
+        final int expectedModCount = this.modCount;
+
+        os.defaultWriteObject();
+        os.writeInt(this.size);
+
+        int idx = this.startIdx;
+        for (int i = 0; i < this.size; i++)
+        {
+            os.writeObject(this.elems[idx]);
+            idx = (idx + 1) % this.elems.length;
+        }
+
+        if (this.modCount != expectedModCount) 
+            throw new ConcurrentModificationException();
+    }
+
+    /**
+     * Ensure capacity for one more element.
+     */
     private void ensureCapacity()
     {
         if (this.elems.length > this.size)
             return;
 
-        Object[] newElems = new Object[this.elems.length*2];
-    
+        int newSize = Math.max(this.size+1, this.elems.length * 2);
+
+        Object[] newElems = new Object[newSize];
+        
         copyTo(newElems);
 
         this.elems = newElems;
