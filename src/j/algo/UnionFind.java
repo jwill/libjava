@@ -61,16 +61,11 @@ public class UnionFind implements Serializable
      * @return true if a and b are in the same set or a and b are the same; 
      *         false otherwise.
      * @exception IndexOutOfBoundsException 
-     *            if a or b is negative or out of bound.
+     *            if a or b is negative or out of bounds.
      */
     public boolean connected(int a, int b)
     {
-        if ((a | b) >= 0 && a < this.rank.length && b < this.rank.length)
-        {
-            return a == b || find(a) == find(b);
-        }
-        
-        throw new IndexOutOfBoundsException();
+        return find(a) == find(b);
     }
     
     /**
@@ -81,14 +76,10 @@ public class UnionFind implements Serializable
      * @return true if the two sets are  disjoint prior to union; 
      *         false otherwise.
      * @exception IndexOutOfBoundsException 
-     *            if a or b is negative or out of bound.
+     *            if a or b is negative or out of bounds.
      */
     public boolean union(int a, int b)
     {
-        if ((a | b) >= 0 && a < this.rank.length && b < this.rank.length)
-        {
-            if (a == b) return false;
-        
             int x = find(a);
             int y = find(b);
         
@@ -114,9 +105,6 @@ public class UnionFind implements Serializable
             this.rank[x] = y;
             this.numDisjoint --;
             return true;
-        }
-
-        throw new IndexOutOfBoundsException();
     }
     
     /**
