@@ -24,6 +24,8 @@ import java.io.*;
 public final class CaselessString
     implements Comparable<CaselessString>, CharSequence, Serializable
 {
+    private static final long serialVersionUID = -1024744406713321676L;
+
     private static final Collator NEUTRAL_COLLATOR = 
         Collator.getInstance(Locale.ROOT);
     
