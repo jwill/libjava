@@ -2,6 +2,7 @@ package j.util;
 
 import java.util.*;
 import java.text.*;
+import java.io.*;
 
 /**
  * A wrapper class for strings that does case-insensitive,
@@ -10,15 +11,18 @@ import java.text.*;
  * This is primarily for use in hash tables where case-insensitive
  * key comparisons are required. 
  * When instantiating a copy of this class with a string, 
- * the case of the actual string value will be preserved for
- * retrieval. 
+ * the actual string value, including the case, will be preserved for
+ * later retrieval. Note that varying accented forms of a character 
+ * will be generally considered different.
  * 
  * All instances of this class are immutable, just like
  * all instances of the String class are.
+ *
+ * This class is thread-safe.
  * @author Lucas Tan
  */
 public final class CaselessString
-    implements Comparable<CaselessString>
+    implements Comparable<CaselessString>, CharSequence, Serializable
 {
     private static final Collator NEUTRAL_COLLATOR = 
         Collator.getInstance(Locale.ROOT);
@@ -34,6 +38,7 @@ public final class CaselessString
     private final int hashCode;
     
     /**
+     * @param value String value to be used as the underlying value.
      * @exception IllegalArgumentException if value is null
      */ 
     public CaselessString(String value)
@@ -50,7 +55,7 @@ public final class CaselessString
     }
     
     /**
-     * Gets the actual string value stored in this object, 
+     * Gets the underlying string value stored in this object, 
      * with the case preserved (as passed to the constructor)
      */
     public String getValue()
@@ -59,7 +64,7 @@ public final class CaselessString
     }
     
     /**
-     * Gets the actual string value stored in this object,
+     * Gets the underlying string value stored in this object,
      * with the case preserved (as passed to the constructor)
      */
     @Override
@@ -68,6 +73,12 @@ public final class CaselessString
         return this.value;
     }
     
+    /**
+     * Performs an equality test in a case-insensitive and locale-neutral
+     * manner.
+     * @param obj This can be a String or CaselessString instance.
+     *        Instances of other classes will result in false being returned.
+     */
     @Override
     public boolean equals(Object obj)
     {
@@ -101,6 +112,37 @@ public final class CaselessString
     public int compareTo(CaselessString o)
     {
         return NEUTRAL_COLLATOR.compare(this.value, o.value);
+    }
+
+    /**
+     * This behaves exactly the same as the substring() method for the
+     * underlying string, 
+     * except that an instance of CaselessString is returned.
+     */
+    @Override
+    public CharSequence subSequence(int start, int end)
+    {
+        return new CaselessString(this.value.substring(start, end));
+    }
+
+    /**
+     * Gets the character at a specified index in the underlying string.
+     * The actual case of the character (as passed to the constructor)
+     * is preserved.
+     */
+    @Override 
+    public char charAt(int index)
+    {
+        return this.value.charAt(index);
+    }
+
+    /**
+     * Gets the length of the underlying string.
+     */
+    @Override
+    public int length()
+    {
+        return this.value.length();
     }
 }
 
