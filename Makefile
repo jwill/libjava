@@ -1,4 +1,5 @@
 PKGS = \
+    j/algo \
     j/collections \
     j/io \
     j/util
