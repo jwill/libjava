@@ -10,10 +10,9 @@ import java.util.Iterator;
 import java.util.ConcurrentModificationException;
 import java.io.*;
 
-
 /**
- * A queue implemented using a circular array that doubles in size when
- * run of space.
+ * A FIFO queue implemented using a circular array that dynamically resizes
+ * when out of space.
  *
  * This queue implementation permits null elements.
  *
@@ -43,9 +42,10 @@ public class ArrayQueue<E> extends AbstractQueue<E>
 
     private class Iter implements Iterator<E>
     {
+        private final int expectedModCount;
+        
         private int cur; // cursor index
         private int left; // num elems left
-        private int expectedModCount;
 
         public Iter()
         {
@@ -92,6 +92,10 @@ public class ArrayQueue<E> extends AbstractQueue<E>
         this(DEFAULT_CAPACITY);
     }
 
+    /**
+     * @param initialCapacity Initial capacity of the underlying array storage.
+     * @exception IllegalArgumentException if initialCapacity is non-positive.
+     */
     public ArrayQueue(int initialCapacity)
     {
         if (initialCapacity <= 0)
@@ -132,8 +136,8 @@ public class ArrayQueue<E> extends AbstractQueue<E>
         throws IOException, ClassNotFoundException
     {
         s.defaultReadObject();
-        int len = this.size = s.readInt();
-        Object[] a = this.elems = new Object[this.size];
+        final int len = this.size = s.readInt();
+        final Object[] a = this.elems = new Object[len];
 
         for (int i = 0; i < len; i++)
         {
@@ -180,6 +184,24 @@ public class ArrayQueue<E> extends AbstractQueue<E>
         this.startIdx = 0;
     }
 
+    /**
+     * @exception UnsupportedOperationException always thrown.
+     */
+    @Override
+    public boolean retainAll(Collection<?> all)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @exception UnsupportedOperationException always thrown.
+     */
+    @Override
+    public boolean removeAll(Collection<?> all)
+    {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public void clear()
     {
@@ -192,7 +214,7 @@ public class ArrayQueue<E> extends AbstractQueue<E>
         // If not wrapped around, ...
         if (leftOverSize >= this.size)
         {
-            // args: fill(arr, from, to, value)
+            // args: Arrays.fill(arr, from, to, value)
             // where from is included but to is excluded
             Arrays.fill(this.elems, this.startIdx, 
                 this.startIdx+this.size, null);
