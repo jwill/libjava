@@ -92,24 +92,28 @@ public final class OrderedPair<A extends Comparable<A>,B extends Comparable<B>>
             if (b == null) return 0;
             else return -1;
 
-        return ((Comparable<T>)a).compareTo(b);
+        // check whether b is null in case a.compareTo()
+        // does not accept null as arg
+        if (b == null) return 1;
+
+        return a.compareTo(b);
     }
     
     /**
      * Compares this pair to another. 
      * 
-     * @param o Cannot be null.
+     * @param other Cannot be null.
      * @return If this pair is "lesser", then returns -1.
      *         If both pairs are equal, then returns 0.
      *         If this pair is "greater", then returns 1.
      */
     @Override
-    public int compareTo(OrderedPair<A, B> o)
+    public int compareTo(OrderedPair<A, B> other)
     {
-        int k = compare(this.first, o.first);
+        int k = compare(this.first, other.first);
         if (k != 0) return k;
 
-        return compare(this.second, o.second);
+        return compare(this.second, other.second);
     }              
 }
 
