@@ -1,11 +1,8 @@
-PKGS = \
-    j/algo \
-    j/collections \
-    j/io \
-    j/util
+# Old make file. Please use ANT build instead.
 
-# File name of final jar file
-JAR_FILE_NAME = libjava.jar
+LIB_VER = 1.0.0
+
+LIB_NAME = libjava
 
 LIBS = 
 
