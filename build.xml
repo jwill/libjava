@@ -1,0 +1,11 @@
+<project name="libjava" basedir="." default="jarMain" />
+    <property name="libVer" value="1.0.0" />
+    <property name="libName" value="libjava" />
+    <property name="libClassPath" value="" />
+    <property name="libMainClass" value="" />
+    <property name="libTestClassPath" value="" />
+    <property name="libTestMainClass" value="" />
+
+    <include file="buildTempl.xml" />
+</project>
+

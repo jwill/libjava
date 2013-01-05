@@ -1,0 +1,154 @@
+<project name="buildTempl" basedir="." default="jarMain">
+    <!-- The following properties must have been defined before 
+         including this xml file :
+         libVer : 
+            Library version. e.g. 1.0.0
+         
+         libName : 
+            Library name to use for naming jar files. e.g. libjava
+         
+         libClassPath : 
+            Class path that specify external dependencies.
+            Leave blank if none.
+            E.g. lib/libjava-1.0.0.jar;lib/mail-1.0.1.jar
+
+         libMainClass:
+            Main class (entry point) with full package path.
+            Leave blank if none.
+            E.g. com.my.MainApp
+            
+         libTestClassPath:
+            Same as libClassPath but only for tests.
+
+         libTestMainClass:
+            Same as libMainClass but only for tests.
+    -->
+
+    <!-- This defines the property myBaseDir which is the dir path
+         for this included xml file -->
+    <dirname property="myBaseDir" file="${ant.file.buildTempl}" />
+
+    <property name="libNameVer" value="${libName}-${libVer}" />
+
+    <!-- All these paths are relative to the main xml file,
+         not this xml file -->
+    <property name="srcDir" value="src" />
+    <property name="srcMainDir" value="${srcDir}/main" />
+    <property name="srcTestDir" value="${srcDir}/test" />
+    <property name="binDir" value="bin" />
+    <property name="binMainDir" value="${binDir}/main" />
+    <property name="binTestDir" value="${binDir}/test" />
+    <property name="binDepDir" value="${binDir}/dep" />
+    <property name="distDir" value="${libNameVer}" />
+    <property name="docDir" value="${distDir}/doc" />
+
+    <!-- The main jar contains only compiled classes from srcMainDir -->
+    <property name="destMainJarFile" value="${libNameVer}.jar" />
+
+    <!-- The dep jar contains all dependencies combined -->
+    <property name="destDepJarFile" value="${libNameVer}-dep.jar" />
+
+    <!-- The test jar contains compiled classes from srcTestDir, as well
+         as any additional dependencies required for the tests.
+         It needs the main and dep jars to run. -->
+    <property name="destTestJarFile" value="${libNameVer}-test.jar" />
+    
+    <macrodef name="myCompile">
+        <attribute name="srcdir" />
+        <attribute name="destdir" />
+        <attribute name="classpath" />
+        <sequential>
+            <mkdir dir="@{destdir}" />
+            <javac 
+                srcdir="@{srcdir}"
+                destdir="@{destdir}"
+                debug="on"
+                classpath="@{classpath}"
+                includeantruntime="false"
+                source="1.5"
+                target="1.5"
+            >
+                <compilerarg value="-Xlint:unchecked" />
+            </javac>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="myJar">
+        <attribute name="basedir" />
+        <attribute name="mainclass" default="" />
+        <attribute name="excludes" default="" />
+        <attribute name="classpath" default="" />
+        <attribute name="destfile" />
+        <sequential>
+            <jar destfile="@{destfile}"
+                 excludes="@{excludes}"
+                 basedir="@{basedir}"
+                 update="false"
+            >
+                <manifest>
+                    <attribute name="Main-Class" value="@{mainclass}" />
+                    <attribute name="Class-Path" value="@{classpath}" />
+                </manifest>
+            </jar>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="copyXmlProps">
+        <attribute name="srcdir" />
+        <attribute name="destdir" />
+        <sequential>
+            <copy todir="@{destdir}" preservelastmodified="true" 
+              flatten="false">
+                <fileset dir="@{srcdir}" casesensitive="no">
+                    <include name="**/*.xml" />
+                </fileset>
+            </copy>
+        </sequential>
+    </macrodef>
+
+    <target name="init">
+        <tstamp />
+    </target>
+
+    <target name="clean">
+        <delete dir="${binDir}" quiet="true" />
+        <delete dir="${distDir}" quiet="true" />
+    </target>
+
+    <target name="buildMain" depends="init">
+        <myCompile srcdir="${srcMainDir}" destdir="${binMainDir}" 
+          classpath="${libClassPath}" />
+        <copyXmlProps srcdir="${srcMainDir}" destdir="${binMainDir}" />
+    </target>
+
+    <target name="buildTest" depends="buildMain">
+        <myCompile srcdir="${srcTestDir}" destdir="${binTestDir}"
+          classpath="${binMainDir};${libClassPath};${libTestClassPath}" />
+        <copyXmlProps srcdir="${srcTestDir}" destdir="${binTestDir}" />
+    </target>
+
+    <target name="jarMain" depends="buildMain">
+        <mkdir dir="${distDir}" />
+        <myJar destfile="${distDir}/${destMainJarFile}" 
+               basedir="${binMainDir}" 
+               mainclass="${libMainClass}" 
+               excludes="**/*.java" 
+               classpath="${destDepJarFile}" />
+        <!-- TODO:  combine dep jars -->
+    </target>
+
+    <target name="jarTest" depends="buildTest,jarMain">
+        <mkdir dir="${distDir}" />
+        <myJar destfile="${distDir}/${destTestJarFile}" 
+               basedir="${binTestDir}" 
+               mainclass="${libTestMainClass}" 
+               excludes="**/*.java" 
+               classpath="${destMainJarFile};${destDepJarFile}" />
+        <!--TODO: merge test deps into test jar -->
+    </target>
+
+    <target name="all" depends="jarTest" />
+        <tstamp />
+    </target>
+</project>
+
