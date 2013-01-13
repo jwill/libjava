@@ -1,106 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project name="buildTempl" basedir="." default="jarMain">
+    <taskdef resource="net/sf/antcontrib/antlib.xml" />
+    
     <!-- The following properties must have been defined before 
          including this xml file :
-         libVer : 
-            Library version. e.g. 1.0.0
-         
          libName : 
-            Library name to use for naming jar files. e.g. libjava
+            Library name to use for naming the dist and jar files. 
+            Must contain only valid filesystem-safe chars.
+            Spaces are strongly discouraged.
+            E.g. libjava
          
-         libClassPath : 
-            Class path that specify external dependencies.
-            Leave blank if none.
-            E.g. lib/libjava-1.0.0.jar;lib/mail-1.0.1.jar
+         libVer : 
+            Library version. If not blank, the version would be used
+            for naming the dist and jar files. 
+            Must contain only valid filesystem-safe chars.
+            Spaces are strongly discouraged.
+            E.g. 1.0.0, 1.0.0b2, 1.0.0_2
 
-         libMainClass:
+         libMainClass :
             Main class (entry point) with full package path.
             Leave blank if none.
             E.g. com.my.MainApp
             
-         libTestClassPath:
-            Same as libClassPath but only for tests.
+         libTestExtJars [not used] : 
+            Class path to external dependency jar files that are not in
+            the lib dir. This is purely for the tests only.
+            Leave blank if none.
+            The path separator can be semi-colon or colon.
+            The paths cannot contain any comma, semi-colon and colon, regardless
+            of what the path separator is.
+            E.g. /usr/lib/libjava-1.0.0.jar;/usr/lib/mail-1.0.1.jar
 
-         libTestMainClass:
-            Same as libMainClass but only for tests.
+         libTestMainClass :
+            The "ClasspathSuite" class with full package name.
+            (see http://johanneslink.net/projects/cpsuite.jsp)
+
+            To use this, the junit jar and its dependencies and the
+            Classpathsuite jar must be in the lib-test dir.
     -->
 
-    <!-- This defines the property myBaseDir which is the dir path
+    <!-- This defines the property myBasePath which is the dir path
          for this included xml file -->
-    <dirname property="myBaseDir" file="${ant.file.buildTempl}" />
+    <dirname property="myBasePath" file="${ant.file.buildTempl}" />
 
-    <property name="libNameVer" value="${libName}-${libVer}" />
+    <!-- Target version of JVM to compile for -->
+    <property name="targetVersion" value="1.5" />
+
+    <if>
+    <equals arg1="${libVer}" arg2="" trim="true" />
+    <then>
+        <property name="libVerSuffix" value="" />
+    </then>
+    <else>
+        <property name="libVerSuffix" value="-${libVer}" />
+    </else>
+    </if>
+    
+    <property name="libNameVer" value="${libName}${libVerSuffix}" />
 
     <!-- All these paths are relative to the main xml file,
          not this xml file -->
-    <property name="srcDir" value="src" />
-    <property name="srcMainDir" value="${srcDir}/main" />
-    <property name="srcTestDir" value="${srcDir}/test" />
-    <property name="binDir" value="bin" />
-    <property name="binMainDir" value="${binDir}/main" />
-    <property name="binTestDir" value="${binDir}/test" />
-    <property name="binDepDir" value="${binDir}/dep" />
-    <property name="distDir" value="${libNameVer}" />
-    <property name="docDir" value="${distDir}/doc" />
+    <property name="dirSrc" value="src" />
+    <property name="dirSrcMain" value="${dirSrc}/main" />
+    <property name="dirSrcTest" value="${dirSrc}/test" />
+    <property name="dirClass" value="class" />
+    <property name="dirClassMain" value="${dirClass}/main" />
+    <property name="dirClassTest" value="${dirClass}/test" />
+    <property name="dirDist" value="dist${libVerSuffix}" />
+    <property name="dirDoc" value="${dirDist}/doc" />
+    <property name="dirLib" value="lib" />
+    <property name="dirLibTest" value="lib-test" />
 
-    <!-- The main jar contains only compiled classes from srcMainDir -->
-    <property name="destMainJarFile" value="${libNameVer}.jar" />
+    <property name="pathSrc" location="${dirSrc}" />
+    <property name="pathSrcMain" location="${dirSrcMain}" />
+    <property name="pathSrcTest" location="${dirSrcTest}" />
+    <property name="pathClass" location="${dirClass}" />
+    <property name="pathClassMain" location="${dirClassMain}" />
+    <property name="pathClassTest" location="${dirClassTest}" />
+    <property name="pathDist" location="${dirDist}" />
+    <property name="pathDoc" location="${dirDoc}" />
+    <property name="pathLib" location="${dirLib}" />
+    <property name="pathLibTest" location="${dirLibTest}" />
 
-    <!-- The dep jar contains all dependencies combined -->
-    <property name="destDepJarFile" value="${libNameVer}-dep.jar" />
+    <!-- The 'main' jar contains only compiled classes from dirSrcMain -->
+    <property name="fileJarMain" value="${libNameVer}.jar" />
+    <property name="pathJarMain" location="${dirDist}/${fileJarMain}" />
 
-    <!-- The test jar contains compiled classes from srcTestDir, as well
+    <!-- The 'all' jar has the same contents as the main, but includes
+         all dependencies -->
+    <property name="fileJarAll" value="${libNameVer}-all.jar" />
+    <property name="pathJarAll" location="${dirDist}/${fileJarAll}" />
+
+    <!-- The test jar contains compiled classes from dirSrcTest, as well
          as any additional dependencies required for the tests.
-         It needs the main and dep jars to run. -->
-    <property name="destTestJarFile" value="${libNameVer}-test.jar" />
+         It needs the 'all' jar to run. -->
+    <property name="fileJarTest" value="${libNameVer}-test.jar" />
+    <property name="pathJarTest" location="${dirDist}/${fileJarTest}" />
     
+    <property name="fileZipDist" value="${libNameVer}.zip" />
+    <property name="pathZipDist" location="${fileZipDist}" />
+
+    <path id="objCpMain">
+        <fileset dir="${pathLib}" includes="*.jar" />
+    </path>
+    <pathconvert property="cpMain" pathsep=";" refid="objCpMain" />
+
+    <path id="objCpTest">
+        <fileset dir="${pathLibTest}" includes="*.jar" />
+    </path>
+    
+    <!-- do not include mainClassPath in testClassPath -->
+    <pathconvert property="cpTest" pathsep=";" refid="objCpTest" />
+
     <macrodef name="myCompile">
         <attribute name="srcdir" />
         <attribute name="destdir" />
-        <attribute name="classpath" />
+        <attribute name="classpath" default="" />
         <sequential>
             <mkdir dir="@{destdir}" />
             <javac 
                 srcdir="@{srcdir}"
                 destdir="@{destdir}"
-                debug="on"
+                listfiles="no"
+                debug="true"
+                debuglevel="lines,source"
                 classpath="@{classpath}"
                 includeantruntime="false"
-                source="1.5"
-                target="1.5"
+                source="${targetVersion}"
+                target="${targetVersion}"
             >
-                <compilerarg value="-Xlint:unchecked" />
+                <compilerarg 
+                  line="-Xlint:finally -Xlint:unchecked -Xlint:deprecation" />
             </javac>
         </sequential>
     </macrodef>
 
     <macrodef name="myJar">
         <attribute name="basedir" />
+        <attribute name="destfile" />
         <attribute name="mainclass" default="" />
         <attribute name="excludes" default="" />
         <attribute name="classpath" default="" />
-        <attribute name="destfile" />
+        <attribute name="mergepath" default="" />
+        <attribute name="duplicate" default="fail" />
         <sequential>
-            <jar destfile="@{destfile}"
-                 excludes="@{excludes}"
-                 basedir="@{basedir}"
-                 update="false"
-            >
-                <manifest>
-                    <attribute name="Main-Class" value="@{mainclass}" />
-                    <attribute name="Class-Path" value="@{classpath}" />
-                </manifest>
-            </jar>
+            <if>
+            <equals arg1="@{mergepath}" arg2="" />
+            <then>
+                <jar destfile="@{destfile}"
+                     excludes="@{excludes}"
+                     basedir="@{basedir}"
+                     update="false"
+                     duplicate="@{duplicate}"
+                     filesetmanifest="skip"
+                >
+                    <manifest>
+                        <attribute name="Main-Class" value="@{mainclass}" />
+                        <attribute name="Class-Path" value="@{classpath}" />
+                    </manifest>
+                </jar>
+            </then>
+            <else>
+                <jar destfile="@{destfile}"
+                     excludes="@{excludes}"
+                     basedir="@{basedir}"
+                     update="false"
+                     duplicate="@{duplicate}"
+                     filesetmanifest="skip"
+                >
+                    <zipgroupfileset dir="." includes="@{mergepath}" />
+                    <!--
+                    <for list="@{mergepath}" delimiter=";" parallel="false"
+                      param="file" trim="true">
+                        <sequential>
+                        <if>
+                            <not><equals arg1="@{file}" arg2="" /></not>
+                            <then>
+                                <zipfileset includes="**/*" src="@{file}" />
+                            </then>
+                        </if>
+                        </sequential>
+                    </for> -->
+                    <manifest>
+                        <attribute name="Main-Class" value="@{mainclass}" />
+                        <attribute name="Class-Path" value="@{classpath}" />
+                    </manifest>
+                </jar>
+            </else>
+            </if>
         </sequential>
     </macrodef>
 
-    <macrodef name="copyXmlProps">
+    <!-- Copy over resource files (xml, properties, pictures, ...) 
+         from one dir to another -->
+    <macrodef name="copyResource">
         <attribute name="srcdir" />
         <attribute name="destdir" />
         <sequential>
             <copy todir="@{destdir}" preservelastmodified="true" 
-              flatten="false">
+              flatten="false" failonerror="true">
                 <fileset dir="@{srcdir}" casesensitive="no">
+                    <include name="**/resources/*" />
                     <include name="**/*.xml" />
+                    <include name="**/*.ini" />
+                    <include name="**/*.properties" />
+                    <exclude name="**/*.java" />
+                    <exclude name="**/*.class" />
+                    <exclude name="**/*~" />
+                    <exclude name="**/*.swp" />
                 </fileset>
             </copy>
         </sequential>
@@ -108,47 +215,92 @@
 
     <target name="init">
         <tstamp />
+        <mkdir dir="${pathDist}" />
     </target>
 
     <target name="clean">
-        <delete dir="${binDir}" quiet="true" />
-        <delete dir="${distDir}" quiet="true" />
+        <delete dir="${pathClass}" />
+        <delete dir="${pathDist}" />
+        <delete file="${pathZipDist}" />
     </target>
 
+    <!-- Compiles the main src and copies over any other resource files -->
     <target name="buildMain" depends="init">
-        <myCompile srcdir="${srcMainDir}" destdir="${binMainDir}" 
-          classpath="${libClassPath}" />
-        <copyXmlProps srcdir="${srcMainDir}" destdir="${binMainDir}" />
+        <myCompile srcdir="${pathSrcMain}" destdir="${pathClassMain}" 
+          classpath="${cpMain}" />
+        <copyResource srcdir="${pathSrcMain}" destdir="${pathClassMain}" />
     </target>
 
+    <!-- Compiles the test src and copies over any other resource files -->
     <target name="buildTest" depends="buildMain">
-        <myCompile srcdir="${srcTestDir}" destdir="${binTestDir}"
-          classpath="${binMainDir};${libClassPath};${libTestClassPath}" />
-        <copyXmlProps srcdir="${srcTestDir}" destdir="${binTestDir}" />
+        <myCompile srcdir="${pathSrcTest}" destdir="${pathClassTest}"
+          classpath="${pathClassMain};${cpMain};${cpTest}" />
+        <copyResource srcdir="${pathSrcTest}" destdir="${pathClassTest}" />
     </target>
 
+    <!-- Builds the main and all jars -->
     <target name="jarMain" depends="buildMain">
-        <mkdir dir="${distDir}" />
-        <myJar destfile="${distDir}/${destMainJarFile}" 
-               basedir="${binMainDir}" 
+        <myJar destfile="${pathJarMain}" 
+               basedir="${pathClassMain}" 
                mainclass="${libMainClass}" 
-               excludes="**/*.java" 
-               classpath="${destDepJarFile}" />
-        <!-- TODO:  combine dep jars -->
+               excludes="**/*.java" />
+
+        <myJar destfile="${pathJarAll}"
+               basedir="${pathClassMain}"
+               mainclass="${libMainClass}" 
+               excludes="**/*.java"
+               duplicate="preserve"
+               mergepath="${dirLib}/*.jar" />
     </target>
 
-    <target name="jarTest" depends="buildTest,jarMain">
-        <mkdir dir="${distDir}" />
-        <myJar destfile="${distDir}/${destTestJarFile}" 
-               basedir="${binTestDir}" 
-               mainclass="${libTestMainClass}" 
+    <!-- Builds the test jar and its dependency (all jar) -->
+    <target name="jarTest" depends="jarMain,buildTest">
+        <myJar destfile="${pathJarTest}" 
+               basedir="${pathClassTest}" 
                excludes="**/*.java" 
-               classpath="${destMainJarFile};${destDepJarFile}" />
-        <!--TODO: merge test deps into test jar -->
+               classpath="${fileJarAll}" 
+               duplicate="preserve"
+               mergepath="${dirLibTest}/*.jar" />
     </target>
 
-    <target name="all" depends="jarTest" />
-        <tstamp />
+    <!-- Builds the docs only -->
+    <target name="docs" depends="">
+        <javadoc destdir="${pathDoc}"
+                 author="true"
+                 version="true"
+                 use="true"
+                 windowtitle="${libNameVer}"
+                 charset="UTF-8"
+                 docencoding="UTF-8"
+                 source="${targetVersion}"
+                 access="protected"
+                 classpath="${cpMain}"
+                 failonerror="true"
+        >
+            <sourcepath location="${pathSrcMain}" />
+            <packageset dir="${pathSrcMain}">
+                <include name="**" />
+            </packageset>
+        </javadoc>
+    </target>
+
+    <!-- Compiles and builds all the jars -->
+    <target name="all" depends="jarMain,jarTest">
+        <!-- nothing -->
+    </target>
+
+    <!-- Builds the main and test jars and run the tests -->
+    <target name="test" depends="jarMain,jarTest">
+        <java classname="org.junit.runner.JUnitCore" fork="yes" 
+          failonerror="true" classpath="${pathJarTest}">
+            <arg value="${libTestMainClass}" />
+        </java>
+    </target>
+    
+    <!-- Populate and zip the dist dir -->
+    <target name="dist" depends="all,docs">
+        <zip destfile="${pathZipDist}" basedir="${pathDist}" 
+          update="false" duplicate="fail" />
     </target>
 </project>
 
