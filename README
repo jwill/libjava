@@ -1,20 +1,53 @@
+========
+Homepage
+========
+https://github.com/lucastan/libjava
+
+========
 Building
-==========
-Do a "make" to build the jar file
+========
+To build, you need Apache ANT : http://ant.apache.org/
+You will also need ANT-contrib: http://ant-contrib.sourceforge.net/
+Do NOT use the old Makefile.
 
-Do a "make docs" to build the documentation. Then open docs/index.html
+Do a "ant dist" to build the entire distribution.
+This will create a "dist-<ver>" dir with the following jar files:
+- libjava-<ver>.jar : 
+    Compiled class only.
 
-Do a "make clean" to remove the jar and the bin dir.
+- libjava-<ver>-all.jar : 
+    Compiled classes with all dependencies packaged in one jar.
 
-j.io.*
-=======
-Utility IO streams classes.
+- libjava-<ver>-test.jar : 
+    Compiled test classes with test-specific dependencies.
+    This requires "libjava-<ver>-all.jar" to be in the same dir to run.
 
-j.util.Option*
-===============
-Java command line parsing library.
+Do a "ant test" to build and run the tests.
 
-See https://github.com/lucastan/proxyServer/blob/master/src/j/net/proxy/ProxyServer.java 
-for a usage example.
+Do a "ant clean" to remove the "dist" and "class" dirs and
+the distribution zip file.
+
+=============
+Documentation
+=============
+Do a "ant dist" or "ant doc" to build the documentation. 
+Then open dist-<ver>/doc/index.html
+
+========
+Packages
+========
+Non-exhaustive list of package descriptions:
+
+j.algo.* :
+    Various algorithms
+
+j.io.* :
+    Utility IO streams classes.
+
+j.util.Option* :
+    Java command line parsing library.
+
+    See https://github.com/lucastan/proxyServer/blob/master/src/j/net/proxy/ProxyServer.java 
+    for a usage example.
 
 
