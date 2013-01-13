@@ -1,44 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="buildTempl" basedir="." default="jarMain">
-    <taskdef resource="net/sf/antcontrib/antlib.xml" />
+<!-- 
+This is a reusable generic build template that assumes
+the following dir layout:
+
+src/main : 
+    All source files
+
+src/test :
+    All test source files
+
+lib :
+    All jar dependencies. Please make sure the jar files have no
+    overlapping classes (i.e., they are mutually exclusive). 
+    To save disk space, you can create soft links to the actual 
+    jar files in your common jar repository if you have one.
+
+lib-test :
+    Same as "lib" but for test code only.
+
+The following properties must have been defined before importing this xml 
+file :
+
+libName : 
+    Library name to use for naming the dist and jar files. 
+    Must contain only valid filesystem-safe chars.
+    Spaces are strongly discouraged.
+    E.g. libjava
+ 
+libVer : 
+    Library version. If not blank, the version would be used
+    for naming the dist and jar files. 
+    Must contain only valid filesystem-safe chars.
+    Spaces are strongly discouraged.
+    E.g. 1.0.0, 1.0.0b2, 1.0.0_2
+
+libMainClass :
+    Main class (entry point) with full package path.
+    Leave blank if none.
+    E.g. com.my.MainApp
     
-    <!-- The following properties must have been defined before 
-         including this xml file :
-         libName : 
-            Library name to use for naming the dist and jar files. 
-            Must contain only valid filesystem-safe chars.
-            Spaces are strongly discouraged.
-            E.g. libjava
-         
-         libVer : 
-            Library version. If not blank, the version would be used
-            for naming the dist and jar files. 
-            Must contain only valid filesystem-safe chars.
-            Spaces are strongly discouraged.
-            E.g. 1.0.0, 1.0.0b2, 1.0.0_2
+libTestExtJars [not used] : 
+    Class path to external dependency jar files that are not in
+    the lib dir. This is purely for the tests only.
+    Leave blank if none.
+    The path separator can be semi-colon or colon.
+    The paths cannot contain any comma, semi-colon and colon, regardless
+    of what the path separator is.
+    E.g. /usr/lib/libjava-1.0.0.jar;/usr/lib/mail-1.0.1.jar
 
-         libMainClass :
-            Main class (entry point) with full package path.
-            Leave blank if none.
-            E.g. com.my.MainApp
-            
-         libTestExtJars [not used] : 
-            Class path to external dependency jar files that are not in
-            the lib dir. This is purely for the tests only.
-            Leave blank if none.
-            The path separator can be semi-colon or colon.
-            The paths cannot contain any comma, semi-colon and colon, regardless
-            of what the path separator is.
-            E.g. /usr/lib/libjava-1.0.0.jar;/usr/lib/mail-1.0.1.jar
+libTestMainClass :
+    The "ClasspathSuite" class with full package name.
+    (see http://johanneslink.net/projects/cpsuite.jsp)
 
-         libTestMainClass :
-            The "ClasspathSuite" class with full package name.
-            (see http://johanneslink.net/projects/cpsuite.jsp)
-
-            To use this, the junit jar and its dependencies and the
-            Classpathsuite jar must be in the lib-test dir.
-    -->
-
+    To use this, the junit jar and its dependencies and the
+    Classpathsuite jar must be in the lib-test dir.
+-->
+<project name="buildTempl" basedir="." default="all">
+    <taskdef resource="net/sf/antcontrib/antlib.xml" />
+   
     <!-- This defines the property myBasePath which is the dir path
          for this included xml file -->
     <dirname property="myBasePath" file="${ant.file.buildTempl}" />
@@ -284,6 +303,10 @@
         </javadoc>
     </target>
 
+    <!-- alias -->
+    <target name="doc" depends="docs">
+    </target>
+
     <!-- Compiles and builds all the jars -->
     <target name="all" depends="jarMain,jarTest">
         <!-- nothing -->
@@ -295,6 +318,10 @@
           failonerror="true" classpath="${pathJarTest}">
             <arg value="${libTestMainClass}" />
         </java>
+    </target>
+
+    <!-- alias -->
+    <target name="tests" depends="test">
     </target>
     
     <!-- Populate and zip the dist dir -->

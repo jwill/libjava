@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="libjava" basedir="." default="jarMain">
+<project name="libjava" basedir="." default="all">
     <property name="libName" value="libjava" />
     <property name="libVer" value="1.0.0" />
     <property name="libMainClass" value="" />
