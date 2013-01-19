@@ -2,7 +2,7 @@
  * @author Lucas Tan
  */
 
-package j.util;
+package j.util.opt;
 
 import java.lang.annotation.*;
 

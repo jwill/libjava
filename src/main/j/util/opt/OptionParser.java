@@ -1,15 +1,49 @@
-/**
- * @author Lucas Tan
- */
-
-package j.util;
+package j.util.opt;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-public class OptionParser
+/**
+ * A utility class containing methods for dealing with options.
+ * @author Lucas Tan
+ */
+public final class OptionUtil
 {
+    // Cannot instantiate
+    private OptionUtil(){}
+    
+    /**
+     * Parses a string into a boolean value.
+     * A string value of "0", "no", "false" and "off" will be interpreted
+     * as false. A value of "1", "yes", "true" and "on" will be
+     * interpreted as true.
+     * An IllegalArgumentException will be thrown for any other value.
+     * @exception NullPointerException if val is null
+     * @exception IllegalArgumentException 
+     *            if val has an unrecognizable value.
+     */
+    public static boolean parseBoolean(String val)
+    {
+        String s = val.trim().toLowerCase(Locale.ROOT);
+        
+        if (s.equals("0") || 
+            s.equals("no") || 
+            s.equals("false") ||
+            s.equals("off")
+        )
+            return false;
+
+        if (s.equals("1") || 
+            s.equals("yes") || 
+            s.equals("true") ||
+            s.equals("on")
+        )
+            return true;
+
+        throw new IllegalArgumentException("invalid boolean option: "+val);
+    }
+    
     private static void printUsage(Object obj)
         throws Exception
     {
@@ -116,12 +150,17 @@ public class OptionParser
      *        
      * @param args Command line arguments as received by main()
      *
-     * @return Returns null on error.
+     * @return Returns null on encountering an internal error or 
+     *         parsing error.
      *         Otherwise, returns an array of unparsed args 
      *         which can be empty if there is none.
+     *
+     * @exception OptionException if an unexpected error/exception
+     *            occurred. The inner exception will be the actual 
+     *            exception that caused the error.
      */
     public static String[] parse(Object obj, String[] args)
-        throws Exception
+        throws OptionException
     {
         try
         {
@@ -151,8 +190,13 @@ public class OptionParser
         }
         catch (OptionException e)
         {
-            System.err.println(e.getMessage());
             // internal exception, no need to print usage
+            System.err.println(e.getMessage());
+        }
+        catch (Throwable t)
+        {
+            // unexpected exceptions/errors
+            throw new OptionException(t);
         }
 
         return null;
@@ -306,7 +350,7 @@ public class OptionParser
                 throw new OptionParserException(f,"required");
         }
 
-        return extras.toArray(new String[]{});
+        return extras.toArray(new String[extras.size()]);
     }
 }
 

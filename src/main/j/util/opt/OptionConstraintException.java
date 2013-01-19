@@ -2,7 +2,7 @@
  * @author Lucas Tan
  */
 
-package j.util;
+package j.util.opt;
 
 import java.lang.reflect.*;
 import java.lang.annotation.*;
@@ -21,7 +21,8 @@ public class OptionConstraintException
         if (con instanceof OptionConstraintRange)
         {
             OptionConstraintRange r = (OptionConstraintRange) con;
-            return "must be between "+r.min()+ " and "+r.max()+" inclusively";
+            return "must be between "+r.min()+ " and "+
+                   r.max()+" inclusively";
         }
         else if (con instanceof OptionConstraintNonEmpty)
         {

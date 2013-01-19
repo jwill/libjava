@@ -2,7 +2,7 @@
  * @author Lucas Tan
  */
 
-package j.util;
+package j.util.opt;
 
 /**
  * An immutable class representing a generic option 
