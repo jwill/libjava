@@ -1,6 +1,7 @@
 ========
 Homepage
 ========
+The source can be obtained from
 https://github.com/lucastan/libjava
 
 ========
@@ -44,8 +45,8 @@ j.algo.* :
 j.io.* :
     Utility IO streams classes.
 
-j.util.Option* :
-    Java command line parsing library.
+j.opt.* :
+    Command line parsing library.
 
     See https://github.com/lucastan/proxyServer/blob/master/src/j/net/proxy/ProxyServer.java 
     for a usage example.
