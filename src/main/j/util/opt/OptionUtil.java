@@ -162,6 +162,9 @@ public final class OptionUtil
     public static String[] parse(Object obj, String[] args)
         throws OptionException
     {
+        boolean wantUsage = false;
+        Throwable unexpected = null;
+
         try
         {
             return parseInternal(obj, args);
@@ -174,13 +177,13 @@ public final class OptionUtil
             else
                 System.err.println(e.getMessage());
 
-            printUsage(obj);
+            wantUsage = true;
         }
         catch (OptionConstraintException e)
         {
             System.err.println("-"+e.getOption().name()+": "+
                     e.getMessage());
-            printUsage(obj);
+            wantUsage = true;
         }
         catch (OptionFieldException e)
         {
@@ -195,9 +198,21 @@ public final class OptionUtil
         }
         catch (Throwable t)
         {
-            // unexpected exceptions/errors
-            throw new OptionException(t);
+            unexpected = t;
         }
+
+        if (wantUsage)
+        {
+            try
+            {
+                printUsage(obj);
+            }
+            catch (Exception e){unexpected = e;}
+        }
+
+        if (unexpected != null)
+            throw new OptionException("Unexpected error/exception", 
+                unexpected);
 
         return null;
     }
