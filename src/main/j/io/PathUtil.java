@@ -11,6 +11,9 @@ import java.io.*;
  */
 public final class PathUtil
 {
+    // cannot instantiate
+    private PathUtil(){}
+
     /**
      * Combine two paths together in an abstract manner.
      * This method accepts the forward or back slash as the
