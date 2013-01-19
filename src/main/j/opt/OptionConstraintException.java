@@ -2,7 +2,7 @@
  * @author Lucas Tan
  */
 
-package j.util.opt;
+package j.opt;
 
 import java.lang.reflect.*;
 import java.lang.annotation.*;

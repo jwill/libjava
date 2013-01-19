@@ -1,4 +1,4 @@
-package j.util.opt;
+package j.opt;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;

@@ -1,4 +1,4 @@
-package j.util;
+package j.str;
 
 import java.util.*;
 import java.text.*;
