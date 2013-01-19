@@ -18,30 +18,14 @@ public final class WebUtil
      */
     public static String htmlEncode(String s)
     {
-        final StringBuilderWriter w = 
-            new StringBuilderWriter(s.length());
-        try
-        {
-            htmlEncode(s, w);
-        }
-        catch (IOException e)
-        {
-            // do nothing since should not happen
-        }
-
-        return w.toString();
+        return htmlEncodeInternal(s).toString();
     }
 
-    /**
-     * Writes the HTML encoded version of a string to a writer
-     * output stream.
-     * Only the amperstand, angle brackets and double quote
-     * characters are encoded.
-     */
-    public static void htmlEncode(String s, Writer w)
-        throws IOException
+    private static StringBuilder htmlEncodeInternal(String s)
     {
         final int len = s.length();
+        final StringBuilder w = new StringBuilder(len);
+
         for (int i = 0; i < len; i++)
         {
             final char c = s.charAt(i);
@@ -54,6 +38,20 @@ public final class WebUtil
             default:  w.append(c);
             }
         }
+
+        return w;
+    }
+
+    /**
+     * Writes the HTML encoded version of a string to a writer
+     * output stream.
+     * Only the amperstand, angle brackets and double quote
+     * characters are encoded.
+     */
+    public static void htmlEncode(String s, Writer w)
+        throws IOException
+    {
+        w.append(htmlEncodeInternal(s));
     }
 }
 
