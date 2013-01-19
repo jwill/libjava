@@ -15,6 +15,7 @@ public final class WebUtil
      * Gets the HTML encoded version of a string.
      * Only the amperstand, angle brackets and double quote
      * characters are encoded.
+     * @exception NullPointerException if s is null
      */
     public static String htmlEncode(String s)
     {
@@ -47,6 +48,7 @@ public final class WebUtil
      * output stream.
      * Only the amperstand, angle brackets and double quote
      * characters are encoded.
+     * @exception NullPointerException if s or w is null
      */
     public static void htmlEncode(String s, Writer w)
         throws IOException
