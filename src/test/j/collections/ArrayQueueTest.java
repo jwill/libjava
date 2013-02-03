@@ -2,6 +2,7 @@ package j.collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -44,6 +45,101 @@ public class ArrayQueueTest
 
     }
 
+    @Test(timeout = 1000)
+    public void removeAndPeekTest()
+    {
+        Queue<Object> q = new ArrayQueue<Object>();
+        assertTrue(q.isEmpty());
+        Object obj = (new Object());
+        assertTrue(q.offer(obj));
+        assertEquals(1, q.size());
+        assertEquals(obj, q.peek());
+        assertEquals(1, q.size());
+        assertFalse(q.isEmpty());
+        
+        assertEquals(obj, q.remove());
+        assertEquals(0, q.size());
+        assertTrue(q.isEmpty());
+        assertEquals(null, q.peek());
+        assertEquals(null, q.poll());
+    }
+    
+    @Test(timeout = 1000, expected = NoSuchElementException.class)
+    public void removeTest()
+    {
+        Queue<Object> q = new ArrayQueue<Object>();
+        assertTrue(q.isEmpty());
+        q.remove();
+    }
+
+    @Test(timeout = 1000, expected = NoSuchElementException.class)
+    public void elementTest()
+    {
+        Queue<Object> q = new ArrayQueue<Object>();
+        assertTrue(q.isEmpty());
+        q.element();
+    }
+    
+    @Test(timeout = 1000, expected = NoSuchElementException.class)
+    public void elementTest2()
+    {
+        Queue<Object> q = new ArrayQueue<Object>();
+        try{
+            assertTrue(q.isEmpty());
+            Object obj = new Object();
+            assertTrue(q.offer(obj));
+            assertEquals(obj, q.element());
+            assertEquals(obj, q.peek());
+            assertEquals(obj, q.poll());
+        }
+        catch(AssertionError e){throw e;}
+        catch(Exception e){assertFalse("Unexpected excep", true);}
+
+        q.element();
+    }
+    
+    @Test(timeout = 10000)
+    public void clearAndAddTest()
+    {
+        Queue<Integer> q = new ArrayQueue<Integer>();
+        
+        for (int i = 0; i < 100; i++)
+        {
+            for (int j = 0; j < i; j ++)
+                assertTrue(q.add(j));
+
+            assertEquals(i, q.size());
+
+            for (int j = 0; j < i; j++)
+            {
+                assertEquals((int)j, (int)q.poll());
+                assertTrue(q.add(j));
+            }
+
+            q.clear();
+            assertEquals(0, q.size()); 
+        }
+    }
+
+    @Test(timeout = 1000)
+    public void pollAndPeekTest()
+    {
+        Queue<Object> q = new ArrayQueue<Object>();
+        assertTrue(q.isEmpty());
+        Object obj = new Object();
+        assertTrue(q.offer(obj));
+        assertEquals(1, q.size());
+        assertEquals(obj, q.peek());
+        assertEquals(1, q.size());
+        assertFalse(q.isEmpty());
+        
+        assertEquals(obj, q.poll());
+        assertEquals(0, q.size());
+        assertTrue(q.isEmpty());
+        assertEquals(null, q.peek());
+        assertEquals(null, q.poll());
+    }
+
     /**
      * Test corner case for iterator
      */
@@ -51,8 +147,15 @@ public class ArrayQueueTest
     public void iterateNSEExceptionCornerCase ()
     {
         Queue<Object> q = new ArrayQueue <Object>();
-        Iterator<Object> itr = q.iterator ();
-        assertFalse ("Call hasNext() on iterator returned by new queue", itr.hasNext());
+        Iterator<Object> itr = null;
+        
+        try // to ensure the expected exception comes from .next()
+        {
+            itr = q.iterator ();
+            assertFalse ("Call hasNext() on iterator returned by new queue", itr.hasNext());
+        }
+        catch(AssertionError e){throw e;}
+        catch(Exception e){assertFalse("Unexpected excep", true);}
 
         // the following line should throw the NSEException
         itr.next ();
@@ -65,7 +168,15 @@ public class ArrayQueueTest
     public void testIteratorRemove ()
     {
         ArrayQueue<Object> h = new ArrayQueue<Object> ( );
-        Iterator<Object> it = h.iterator();
+        Iterator<Object> it = null;
+        
+        try
+        {
+            it = h.iterator();
+        }
+        catch(AssertionError e){throw e;}
+        catch(Exception e){assertFalse("Unexpected excep", true);}
+
         it.remove();
     }
     

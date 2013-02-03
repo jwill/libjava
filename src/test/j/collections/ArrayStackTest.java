@@ -2,6 +2,7 @@ package j.collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -30,19 +31,56 @@ public class ArrayStackTest
         assertEquals ("Create new stack, call poll()", null, q.poll ());
     }
 
+    @Test(timeout = 1000)
+    public void removeAndPeekTest()
+    {
+        ArrayStack<Object> q = new ArrayStack<Object>();
+        assertTrue(q.isEmpty());
+        Object obj = (new Object());
+        assertTrue(q.push(obj));
+        assertEquals(1, q.size());
+        assertEquals(obj, q.peek());
+        assertEquals(1, q.size());
+        assertFalse(q.isEmpty());
+        
+        assertEquals(obj, q.remove());
+        assertEquals(0, q.size());
+        assertTrue(q.isEmpty());
+        assertEquals(null, q.peek());
+        assertEquals(null, q.poll());
+    }
+    
+    @Test(timeout = 1000, expected = NoSuchElementException.class)
+    public void removeTest()
+    {
+        ArrayStack<Object> q = new ArrayStack<Object>();
+        assertTrue(q.isEmpty());
+        q.remove();
+    }
+
+    @Test(timeout = 1000, expected = NoSuchElementException.class)
+    public void topTest2()
+    {
+        ArrayStack<Object> q = new ArrayStack<Object>();
+        try{
+            assertTrue(q.isEmpty());
+            Object obj = new Object();
+            assertTrue(q.push(obj));
+            assertEquals(obj, q.top());
+            assertEquals(obj, q.peek());
+            assertEquals(obj, q.poll());
+        }
+        catch(AssertionError e){throw e;}
+        catch(Exception e){assertFalse("Unexpected excep", true);}
+    
+        q.top();
+    }
+
     @Test(expected = NoSuchElementException.class)
     public void topTest()
     {
         new ArrayStack<Object>().top();
     }
-
-
-    @Test(expected = NoSuchElementException.class)
-    public void removeTest()
-    {
-        new ArrayStack<Object>().remove();
-    }
-
 
     /**
      * Tests basic offer functionality to make sure it returns true
@@ -54,8 +92,30 @@ public class ArrayStackTest
         ArrayStack <Object> q = new ArrayStack <Object> ();
         assertEquals ("Create stack, call push(null)", true, q.push (null));
         assertEquals ("Call size() after push(null)", 1, q.size ());
-
         assertEquals ("Create stack, call push(null)", null, q.top ());
+    }
+
+    @Test(timeout = 10000)
+    public void clearAndAddTest()
+    {
+        ArrayStack<Integer> q = new ArrayStack<Integer>();
+        
+        for (int i = 0; i < 100; i++)
+        {
+            for (int j = 0; j < i; j ++)
+                assertTrue(q.add(j));
+
+            assertEquals(i, q.size());
+
+            for (int j = 0; j < i; j++)
+                assertEquals((int)(i-1-j), (int)q.poll());
+
+            for (int j = 0; j < i; j ++)
+                assertTrue(q.add(j));
+            
+            q.clear();
+            assertEquals(0, q.size()); 
+        }
     }
 
     /**

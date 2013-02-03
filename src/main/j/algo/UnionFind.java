@@ -80,31 +80,31 @@ public class UnionFind implements Serializable
      */
     public boolean union(int a, int b)
     {
-            int x = find(a);
-            int y = find(b);
-        
-            // If they are already connected, then do not
-            // union the sets.
-            if (x == y) return false;
-        
-            // If root x has a greater height than root y,
-            // then make y a child of x.
-            if (this.rank[x] < this.rank[y])
-            {
-                // swap x and y
-                int t = x;
-                x = y;
-                y = t;
-            } 
-            else if (this.rank[x] == this.rank[y])
-            {
-                this.rank[y] --;
-            } 
-        
-            // make x a child of y
-            this.rank[x] = y;
-            this.numDisjoint --;
-            return true;
+        int x = find(a);
+        int y = find(b);
+    
+        // If they are already connected, then do not
+        // union the sets.
+        if (x == y) return false;
+    
+        // If root x has a greater height than root y,
+        // then make y a child of x.
+        if (this.rank[x] < this.rank[y])
+        {
+            // swap x and y
+            int t = x;
+            x = y;
+            y = t;
+        } 
+        else if (this.rank[x] == this.rank[y])
+        {
+            this.rank[y] --;
+        } 
+    
+        // make x a child of y
+        this.rank[x] = y;
+        this.numDisjoint --;
+        return true;
     }
     
     /**
@@ -147,9 +147,11 @@ public class UnionFind implements Serializable
             idx = theRank;
         }
 
+        Integer polled;
+
         // Perform path compression.
-        while (this.pathQ.size() > 0)
-            this.rank[this.pathQ.poll()] = idx;
+        while ((polled = this.pathQ.poll()) != null)
+            this.rank[polled] = idx;
 
         return idx;
     }
