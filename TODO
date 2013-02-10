@@ -1,0 +1,19 @@
+
+- onBeforeDist event hooks for buildTempl.xml... 
+  see  extension-point task
+
+- incorporate task for downloading maven dependencies into lib
+  and lib-test
+
+- LICENSE
+
+- string.aho corasick
+
+- algo.AVL tree  implements map? 
+
+- algo.Min heap
+
+- algo.max heap
+
+- string.boyer moore
+
