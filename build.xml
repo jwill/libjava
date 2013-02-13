@@ -5,6 +5,6 @@
     <property name="libMainClass" value="" />
     <property name="libTestMainClass" value="j.AllTests" />
 
-    <import file="buildTempl.xml" />
+    <import file="build-templ-java/buildTempl.xml" />
 </project>
 

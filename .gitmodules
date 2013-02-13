@@ -1,0 +1,3 @@
+[submodule "build-templ-java"]
+	path = build-templ-java
+	url = https://github.com/lucastan/build-templ-java.git
