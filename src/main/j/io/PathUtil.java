@@ -42,5 +42,33 @@ public final class PathUtil
 
         throw new NullPointerException("child is null");
     }
+
+    /**
+     * This is the extended version of the two-argument method.
+     * If only one argument is specified, the combined path is the argument
+     * itself.
+     * @exception IllegalArgumentException if no argument is specified.
+     * @exception NullPointerException if at least one argument is null.
+     */
+    public static String combine(String... s)
+    {
+        if (s != null && s.length > 0)
+        {
+            StringBuilder sb = new StringBuilder(s[0]);
+            String last = s[0];
+
+            for (int i = 1; i < s.length; i++)
+            {
+                if (!last.endsWith("/") && !last.endsWith("\\"))
+                    sb.append(File.separatorChar);
+
+                sb.append(last = s[i]);
+            }
+
+            return sb.toString();
+        }
+
+        throw new IllegalArgumentException("specify one or more arguments");
+    }
 }
 
