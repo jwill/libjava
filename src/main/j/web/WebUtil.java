@@ -13,7 +13,7 @@ public final class WebUtil
 
     /**
      * Gets the HTML encoded version of a string.
-     * Only the amperstand, angle brackets and double quote
+     * Only the amperstand, angle brackets and double and single quote
      * characters are encoded.
      * @exception NullPointerException if s is null
      */
@@ -36,6 +36,7 @@ public final class WebUtil
             case '>': w.append("&gt;"); break;
             case '&': w.append("&amp;"); break;
             case '"': w.append("&quot;"); break;
+            case '\'': w.append("&apos;"); break;
             default:  w.append(c);
             }
         }
