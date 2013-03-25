@@ -44,8 +44,21 @@ public class LineColReader extends Reader
     public int peek() throws IOException
     {
         int ch = this.in.read();
-        if (ch >= 0) this.in.unread(ch);
-        return ch;
+        if (ch != '\r')
+        {
+            if (ch >= 0) this.in.unread(ch);
+            return ch;
+        }
+
+        this.in.unread('\n');
+        
+        int nextCh = this.in.read();
+        if (nextCh >= 0 && nextCh != '\n')
+        {
+            this.in.unread(nextCh);
+        }
+
+        return '\n';
     }
 
     /**
