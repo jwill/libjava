@@ -12,7 +12,7 @@ import java.io.*;
 public class LineColReader extends Reader
 {
     private final PushbackReader in;
-    
+
     /** One-based line number of last char read. */
     private int lineNum;
 
@@ -29,7 +29,7 @@ public class LineColReader extends Reader
     {
         if (in == null) throw new IllegalArgumentException("in is null");
 
-        this.in = new PushbackReader(in);
+        this.in = new PushbackReader(in, 2);
         this.lineNum = 0; 
         this.colNum = 0; 
         this.lineInc = 1;
@@ -42,15 +42,14 @@ public class LineColReader extends Reader
      *         been reached.
      */
     public int peek() throws IOException
-    {
+    {   
         int ch = this.in.read();
+        
         if (ch != '\r')
         {
             if (ch >= 0) this.in.unread(ch);
             return ch;
         }
-
-        this.in.unread('\n');
         
         int nextCh = this.in.read();
         if (nextCh >= 0 && nextCh != '\n')
@@ -58,6 +57,7 @@ public class LineColReader extends Reader
             this.in.unread(nextCh);
         }
 
+        this.in.unread('\n');
         return '\n';
     }
 
