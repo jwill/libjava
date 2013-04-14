@@ -1,6 +1,9 @@
 package j.web;
 
 import java.io.*;
+import java.util.*;
+import java.util.regex.*;
+
 import j.io.*;
 
 /**
@@ -10,6 +13,12 @@ import j.io.*;
 public final class WebUtil
 {
     private WebUtil(){}
+
+    private static final Pattern ATTRIB_PATTERN = 
+        // group 1: attrib name (allowing namespace)
+        // group 2: value including quote chars if any
+        Pattern.compile("([\\w:]+)\\s*=\\s*(\"[^\"]*\"|'[^']*'|\\S*)",
+            Pattern.CASE_INSENSITIVE);
 
     /**
      * Gets the HTML encoded version of a string.
@@ -55,6 +64,26 @@ public final class WebUtil
         throws IOException
     {
         w.append(htmlEncodeInternal(s));
+    }
+
+    /**
+     * Parses an HTML fragment containing attribute pairs without the
+     * tag name, in to a map.
+     * This is a forgiving parser that does not adhere strictly to XML rules,
+     * but well-formed XML are guaranteed to be parsed correctly.
+     * @param html This must be in the format: attrib1="value" attrib2="value"
+     */
+    public static Map<String,String> parseAttrib(String html)
+    {
+        Map<String,String> map = new HashMap<String,String>();
+
+        Matcher m = ATTRIB_PATTERN.matcher(html);
+        while(m.find())
+        {
+            map.put(m.group(1), StrUtil.unquote(m.group(2));
+        }
+
+        return map;
     }
 }
 
