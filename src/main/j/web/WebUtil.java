@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import j.str.*;
 import j.io.*;
 
 /**
@@ -80,7 +81,7 @@ public final class WebUtil
         Matcher m = ATTRIB_PATTERN.matcher(html);
         while(m.find())
         {
-            map.put(m.group(1), StrUtil.unquote(m.group(2));
+            map.put(m.group(1), StrUtil.unquote(m.group(2)));
         }
 
         return map;
