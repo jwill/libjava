@@ -93,8 +93,13 @@ public final class StrUtil
                (start == '"' || start == '\'' ||
                 end   == '"' || end   == '\'');
                 
-            if (isQuote && start != end)
-                throw new IllegalArgumentException("different quote chars");
+            if (isQuote)
+            {
+                if (start != end)
+                    throw new IllegalArgumentException("different quote chars");
+            
+                return str.substring(1, len-1);
+            }
         }
         else if (len >= 1)
         {
