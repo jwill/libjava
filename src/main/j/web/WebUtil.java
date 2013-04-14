@@ -73,6 +73,8 @@ public final class WebUtil
      * This is a forgiving parser that does not adhere strictly to XML rules,
      * but well-formed XML are guaranteed to be parsed correctly.
      * @param html This must be in the format: attrib1="value" attrib2="value"
+     * @return Map of attrib-value pairs. The names and values are NOT HTML
+     * decoded.
      */
     public static Map<String,String> parseAttrib(String html)
     {
