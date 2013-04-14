@@ -58,4 +58,52 @@ public final class StrUtil
         
         return b;
     }
+
+    /**
+     * Removes surrounding quote chars (" or ') from a string.
+     * Any whitespace surrounded by the quote chars are preserved but 
+     * whitespaces outside of the quote chars are removed. If no quote chars
+     * are present the entire string is trimmed of whitespaces.
+     * The string is processed adhering to the following rules:
+     * - the starting and ending quote chars must be the same.
+     * - if the starting or ending quote char is present, the other must also
+     *    be present, that is, there must be no unmatched quote char.
+     * <pre>
+     * Examples: 
+     * String s = "  ' hello '  "; // unquote(s) returns "' hello '"
+     * String s = "  'hello   ";   // unquote(s) will throw an exception
+     * String s = " hello ";       // unquote(s) returns "hello"
+     * </pre> 
+     * @param str 
+     * @exception IllegalArgumentException if at least one 
+     * of the rules is violated. 
+     */
+    public static String unquote(String str)
+    {
+        str = str.trim();
+        
+        final int len = str.length();
+        
+        if (len >= 2)
+        {
+            char start = str.charAt(0);
+            char end = str.charAt(len-1);
+            
+            boolean isQuote = 
+               (start == '"' || start == '\'' ||
+                end   == '"' || end   == '\'');
+                
+            if (isQuote && start != end)
+                throw new IllegalArgumentException("different quote chars");
+        }
+        else if (len >= 1)
+        {
+            char start = str.charAt(0);
+
+            if (start == '"' || start == '\'')
+                throw new IllegalArgumentException("unmatched starting quote");
+        }
+
+        return str;
+    }
 }
