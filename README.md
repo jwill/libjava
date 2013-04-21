@@ -40,9 +40,11 @@ Non-exhaustive list of package descriptions:
 - j.algo :
     - UnionFind
 
+
 - j.collections:
     - Queue and stack based on efficient circular array. 
     - Ordered pair (2-tuple)
+
 
 - j.io :
     - IO streams and utility classes
@@ -50,11 +52,13 @@ Non-exhaustive list of package descriptions:
     - HTTP chunked input/ouput stream.
     - FileUtil: read entire text files
 
+
 - j.opt :
     - Command line parsing library based on Java annotations.
     - Powerful and easy to use and configure.
-    - See https://github.com/lucastan/proxyServer/blob/master/src/j/net/proxy/ProxyServer.java 
+    - See https://github.com/lucastan/proxyServer/blob/master/src/main/j/net/proxy/ProxyServer.java 
     for a usage example.
+
 
 - j.util :
     - Clipboard utilities
