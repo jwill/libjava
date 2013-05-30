@@ -1,0 +1,27 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.json:json:20090211'
+    testCompile 'junit:junit:4.8'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main'
+       }
+   }
+   test {
+        java {
+            srcDir 'src/test'
+       }
+   }
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.5'
+}
